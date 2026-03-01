@@ -50,8 +50,9 @@ X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_
 X_train_processed = preprocessor.fit_transform(X_train)
 X_test_processed = preprocessor.transform(X_test)
 
-# Ensure output directory exists and serialize outputs
-os.makedirs('models', exist_ok=True) 
+# Ensure output directories exist and serialize outputs
+os.makedirs('models', exist_ok=True)
+os.makedirs('data', exist_ok=True)
 
 joblib.dump(preprocessor, 'models/preprocessor.pkl')
 np.save('data/X_train.npy', X_train_processed)
