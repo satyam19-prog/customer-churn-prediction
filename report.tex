@@ -1,0 +1,494 @@
+\documentclass[11pt]{article}
+
+\usepackage[margin=1in]{geometry}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{hyperref}
+\usepackage{float}
+\usepackage{enumitem}
+
+\hypersetup{
+  colorlinks=true,
+  linkcolor=blue,
+  urlcolor=blue,
+  citecolor=blue
+}
+
+\title{Customer Churn Prediction System\\[0.5em]\large Technical Report}
+\author{Customer Analytics Team}
+\date{\today}
+
+\begin{document}
+
+\maketitle
+
+\begin{abstract}
+Customer churn directly impacts recurring revenue and long--term customer lifetime value in subscription--based businesses.
+This project develops an end--to--end churn prediction system that identifies at--risk customers using historical behavioral and transactional data from a telco environment.
+The implemented pipeline performs robust preprocessing (missing value handling, encoding, scaling, and train--test splitting), trains and evaluates multiple machine learning models (Logistic Regression and Decision Tree), and exposes the best performing model through an interactive Streamlit application for real--time scoring and risk explanation.
+The report describes the methodology, experimental setup, evaluation metrics, and system architecture, and concludes with recommendations for business usage and future technical enhancements.
+\end{abstract}
+
+\section{Business Problem and Objectives}
+
+Customer churn---the decision of a customer to discontinue a service---is a critical challenge for subscription businesses, particularly in telecommunications.
+Retaining existing customers is typically more cost-effective than acquiring new ones, so the ability to proactively flag at--risk accounts is a key driver of recurring revenue and customer lifetime value.
+
+This project builds a data-driven churn prediction engine that:
+\begin{itemize}[leftmargin=2em]
+  \item learns patterns in historical behavior and account attributes,
+  \item estimates the likelihood that a current customer will churn,
+  \item and exposes those insights through an interactive web interface suitable for business users.
+\end{itemize}
+
+The system is implemented in Python and organized into three main modules:
+\begin{enumerate}[leftmargin=2em]
+  \item \texttt{data\_prep.py}: data loading and preprocessing pipeline,
+  \item \texttt{model\_training.py}: model training, evaluation, and artifact generation,
+  \item \texttt{app.py}: Streamlit web application for interactive prediction and model inspection.
+\end{enumerate}
+
+The remainder of this report follows a structured flow inspired by typical machine learning case studies: Section~\ref{sec:data} describes the dataset, Section~\ref{sec:eda} summarizes exploratory analysis, Section~\ref{sec:method} details the modelling pipeline, Section~\ref{sec:results} presents quantitative evaluation, Section~\ref{sec:discussion} discusses optimisation and limitations, Section~\ref{sec:overview} outlines project milestones and tech stack, Section~\ref{sec:readme-structure} recommends README and GitHub formatting, and the report concludes with team roles and final remarks.
+
+\section{Dataset and Feature Space}
+\label{sec:data}
+
+\subsection{Source and Structure}
+
+The project uses the Telco Customer Churn dataset (commonly attributed to IBM Sample Data), stored locally as \texttt{data/telco\_churn.csv}.
+Each row represents a unique customer account, with a binary target variable \texttt{Churn} (\texttt{Yes}/\texttt{No}) and a mix of demographic, service usage, and billing features, including:
+\begin{itemize}[leftmargin=2em]
+  \item Demographics: gender, senior citizen flag, partner, dependents,
+  \item Services: phone service, multiple lines, internet service type, online security, backup, device protection, tech support, streaming TV/movies,
+  \item Account \& billing: tenure (months), contract type, paperless billing, payment method, monthly and total charges.
+\end{itemize}
+
+The raw data is ingested directly in \texttt{data\_prep.py} using
+\begin{verbatim}
+df = pd.read_csv('data/telco_churn.csv')
+\end{verbatim}
+and the target is defined by mapping \texttt{Churn} to a binary variable.
+
+\subsection{Important Predictors}
+
+From a feature perspective, the dataset captures three broad categories of information:
+\begin{itemize}[leftmargin=2em]
+  \item customer profile (e.g., senior citizen status, dependents),
+  \item subscribed services (e.g., internet service type, security and backup add-ons),
+  \item commercial relationship (e.g., tenure, contract term, billing preferences, payment method, monthly and total charges).
+\end{itemize}
+These variables form the feature space on which the churn models are trained.
+
+\section{Exploratory Analysis}
+\label{sec:eda}
+
+Exploratory analysis for this dataset primarily focuses on understanding churn rates across segments and ensuring that variables are well-behaved before modelling.
+Typical checks include:
+\begin{itemize}[leftmargin=2em]
+  \item distribution of churn vs.\ non-churn customers,
+  \item tenure and charge distributions by churn status,
+  \item relationship between contract type and churn rate,
+  \item inspection of missing or malformed values (notably in \texttt{TotalCharges}).
+\end{itemize}
+Insights from this analysis motivate the modelling choices: for example, strong separation between contract types and churn suggests tree-based splits will be informative, while near-linear trends in tenure and charges favour linear models.
+
+\section{Modelling Pipeline}
+\label{sec:method}
+
+\subsection{Preprocessing Steps}
+
+The preprocessing logic is encapsulated in \texttt{data\_prep.py} and makes extensive use of \texttt{scikit-learn} pipelines:
+\begin{enumerate}[leftmargin=2em]
+  \item \textbf{Target and feature definition.}
+  The customer identifier \texttt{customerID} and target \texttt{Churn} are removed from the feature matrix:
+  \begin{verbatim}
+  X = df.drop(columns=['Churn', 'customerID'])
+  y = df['Churn'].map({'Yes': 1, 'No': 0})
+  \end{verbatim}
+  \item \textbf{Numeric features.}
+  Numeric attributes (\texttt{tenure}, \texttt{MonthlyCharges}, \texttt{TotalCharges}) are processed via a numeric pipeline:
+  \begin{itemize}
+    \item \textbf{Imputation:} median imputation using \texttt{SimpleImputer(strategy='median')};
+    \item \textbf{Scaling:} standardization with \texttt{StandardScaler()}.
+  \end{itemize}
+  \item \textbf{Categorical features.}
+  All remaining object/string columns are treated as categorical features and processed with:
+  \begin{itemize}
+    \item \textbf{Imputation:} most frequent category imputation;
+    \item \textbf{Encoding:} one--hot encoding with \texttt{OneHotEncoder(drop='first', sparse\_output=False)} to avoid multicollinearity and obtain a dense feature matrix.
+  \end{itemize}
+  \item \textbf{Column transformer and pipeline.}
+  Numeric and categorical transformers are merged in a single \texttt{ColumnTransformer} named \texttt{preprocessor}, which defines the full preprocessing pipeline applied to the input data.
+  \item \textbf{Train--test split.}
+  To avoid data leakage, the dataset is split into train and test partitions \emph{before} fitting the preprocessing pipeline:
+  \begin{verbatim}
+  X_train, X_test, y_train, y_test = train_test_split(
+      X, y, test_size=0.2, random_state=42
+  )
+  \end{verbatim}
+  The preprocessor is fitted on \texttt{X\_train} and then applied to both \texttt{X\_train} and \texttt{X\_test}.
+  \item \textbf{Serialization.}
+  The fitted \texttt{preprocessor} and transformed arrays are persisted to disk:
+  \begin{itemize}
+    \item \texttt{models/preprocessor.pkl} (transformation pipeline),
+    \item \texttt{data/X\_train.npy}, \texttt{data/X\_test.npy},
+    \item \texttt{data/y\_train.npy}, \texttt{data/y\_test.npy}.
+  \end{itemize}
+\end{enumerate}
+
+This design ensures reproducible preprocessing, clean separation between raw and transformed data, and compatibility with downstream modeling and deployment steps.
+
+\subsection{Modeling Approach}
+
+The \texttt{model\_training.py} module loads the preprocessed arrays and the serialized preprocessor, and trains two supervised learning models:
+\begin{enumerate}[leftmargin=2em]
+  \item \textbf{Logistic Regression} (\texttt{sklearn.linear\_model.LogisticRegression}) with \texttt{max\_iter=1000} for convergence stability.
+  \item \textbf{Decision Tree Classifier} (\texttt{sklearn.tree.DecisionTreeClassifier}) with controlled depth (\texttt{max\_depth=4}) and fixed \texttt{random\_state=42} for interpretability and reproducibility.
+\end{enumerate}
+
+For each model, predictions are generated on the held--out test set and evaluated using an extended family of metrics:
+\begin{itemize}[leftmargin=2em]
+  \item classification metrics: Accuracy, Precision, Recall, F1 score, and F2 score (which emphasises recall),
+  \item regression-style metrics on the binary labels: \(R^2\) score, Mean Squared Error (MSE), Mean Absolute Error (MAE),
+  \item Mean Absolute Scaled Error (MASE), where the scaling factor is the MAE of a naive baseline that always predicts the majority class.
+\end{itemize}
+All of these quantities are computed via \texttt{sklearn.metrics} and printed by \texttt{model\_training.py}; the exact values used in this report should be taken from a concrete training run.
+
+In addition, feature importances from the Decision Tree are used to extract the top churn drivers by magnitude, providing model--based explanations that are surfaced in the report and can be reflected in business narratives.
+
+Both trained models are serialized for deployment:
+\begin{itemize}[leftmargin=2em]
+  \item \texttt{models/lr\_model.pkl} (Logistic Regression),
+  \item \texttt{models/dt\_model.pkl} (Decision Tree).
+\end{itemize}
+
+\subsection{Model Selection and Deployment Logic}
+
+The user--facing application in \texttt{app.py} loads the serialized artifacts using \texttt{joblib}:
+\begin{verbatim}
+preprocessor = joblib.load('models/preprocessor.pkl')
+lr          = joblib.load('models/lr_model.pkl')
+dt          = joblib.load('models/dt_model.pkl')
+\end{verbatim}
+It also attempts to load the preprocessed test arrays.
+If these arrays are available, a helper function computes the F1 score and other metrics for each model and selects the best model on the basis of F1:
+\begin{itemize}[leftmargin=2em]
+  \item If both models are available, the one with higher F1 on \texttt{X\_test} is used.
+  \item If the test arrays are missing, Logistic Regression is used as a default.
+\end{itemize}
+
+Two kinds of outputs are generated in the UI for a given customer profile:
+\begin{enumerate}[leftmargin=2em]
+  \item A binary churn prediction (``WILL CHURN'' vs.\ ``WILL STAY''),
+  \item Probabilistic outputs and derived risk levels (Low/Medium/High) when the model supports \texttt{predict\_proba}.
+\end{enumerate}
+
+To ensure the UI and trained models are consistent with training--time preprocessing, the app reuses the serialized \texttt{preprocessor} and explicitly coerces numeric columns to numeric types, handling blank strings and missing values similarly to the training phase.
+
+\subsection{Interactive User Interface}
+
+The \texttt{app.py} module implements a Streamlit dashboard with the following design:
+\begin{itemize}[leftmargin=2em]
+  \item \textbf{Page configuration:} wide layout and custom button styling for a modern look and consistent call--to--action.
+  \item \textbf{Input layout:} two main columns:
+  \begin{itemize}
+    \item Left column for demographics and core services (gender, senior citizen status, partner, dependents, phone service, multiple lines, internet service, online security/backup).
+    \item Right column for additional services and account features (device protection, tech support, streaming TV/movies, tenure, contract type, paperless billing, payment method, monthly and total charges).
+  \end{itemize}
+  \item \textbf{Prediction flow:} upon clicking the \emph{Predict Churn} button, inputs are assembled into a single \texttt{DataFrame}, transformed by the preprocessor, and passed to the selected model for prediction and probability estimation.
+  \item \textbf{Visual feedback:}
+  \begin{itemize}
+    \item Color--coded prediction box (red for churn risk, green for low risk),
+    \item Model confidence metric (max class probability),
+    \item Risk level badge (Low/Medium/High) based on churn probability thresholds,
+    \item Grouped bar chart of churn vs.\ non--churn probabilities using Plotly.
+  \end{itemize}
+  \item \textbf{Sidebar:} displays the selected model name and key performance metrics on the test set, plus a short list of top predictors (e.g., contract type, tenure, monthly charges, internet service, payment method) and implementation credits.
+\end{itemize}
+
+This design emphasizes clarity and business usability: non--technical users can modify customer traits and immediately observe how the predicted churn risk responds.
+
+\section{Model Assessment and Results}
+\label{sec:results}
+
+\subsection{Training and Evaluation Protocol}
+
+The experimental pipeline is driven by two scripts:
+\begin{enumerate}[leftmargin=2em]
+  \item \texttt{data\_prep.py}: prepares the data and persists transformed arrays and the preprocessor.
+  \item \texttt{model\_training.py}: trains, evaluates, and serializes models, and generates visual artifacts.
+\end{enumerate}
+
+The main protocol is as follows:
+\begin{itemize}[leftmargin=2em]
+  \item \textbf{Split:} 80\% of the data is used for training and 20\% for testing, with a fixed random seed for reproducibility.
+  \item \textbf{Preprocessing:} numeric features are standardized and imputed; categorical features are imputed and one--hot encoded.
+  \item \textbf{Models:} Logistic Regression and a shallow Decision Tree are trained and evaluated on the same test set.
+  \item \textbf{Metrics:} a comprehensive suite including Accuracy, Precision, Recall, F1, F2, \(R^2\), MSE, MAE, and MASE is computed using \texttt{sklearn.metrics} and custom helpers.
+\end{itemize}
+
+The concrete numerical values of these metrics depend on the specific version of the dataset and the environment where the scripts are executed; they are printed to the console when running \texttt{python model\_training.py}. For the purposes of this report, the table below is intended as a template that should be populated with the actual values from a recent training run.
+
+\subsection{Quantitative Results}
+
+Table~\ref{tab:metrics} summarizes the evaluation metrics for both models.
+
+\begin{table}[H]
+  \centering
+  \caption{Test set performance of trained models. Replace the placeholder entries with the values printed by \texttt{model\_training.py}.}
+  \label{tab:metrics}
+  \begin{tabular}{lccccccccc}
+    \toprule
+    \textbf{Model} & \textbf{Accuracy} & \textbf{Precision} & \textbf{Recall} & \textbf{F1} & \textbf{F2} & \(\mathbf{R^2}\) & \textbf{MSE} & \textbf{MAE} & \textbf{MASE} \\
+    \midrule
+    Logistic Regression & -- & -- & -- & -- & -- & -- & -- & -- & -- \\
+    Decision Tree       & -- & -- & -- & -- & -- & -- & -- & -- & -- \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+In typical Telco churn settings, Logistic Regression often provides a strong baseline with reasonably balanced precision and recall, while a shallow Decision Tree offers interpretability and may highlight non--linear interactions at the cost of slightly reduced generalization.
+The application automatically selects the model with the highest F1 score on the test set (when test arrays are available), reflecting a balanced preference for both precision and recall in the churn context.
+
+\subsection{Visualizations}
+
+The training script generates two key visual artifacts for analysis and reporting:
+\begin{itemize}[leftmargin=2em]
+  \item \textbf{Confusion matrix} (\texttt{confusion\_matrix.png}):
+  illustrates true vs.\ predicted churn outcomes for the Logistic Regression model, highlighting the trade--off between false positives (incorrectly flagging loyal customers) and false negatives (missing at--risk customers).
+  \item \textbf{Decision Tree plot} (\texttt{decision\_tree.png}):
+  visualizes the decision structure of the depth--limited Decision Tree, surfacing the most influential splits (e.g., contract type, tenure, monthly charges).
+\end{itemize}
+
+They can be included in the LaTeX report as follows:
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.7\textwidth]{confusion_matrix.png}
+  \caption{Confusion matrix for Logistic Regression on the test set.}
+  \label{fig:confusion-matrix}
+\end{figure}
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=\textwidth]{decision_tree.png}
+  \caption{Decision Tree structure highlighting key churn drivers.}
+  \label{fig:decision-tree}
+\end{figure}
+
+\section{Discussion}
+\label{sec:discussion}
+
+\subsection{Interpretation of Results}
+
+From a business perspective, the metrics captured in Table~\ref{tab:metrics} quantify how reliably the model can flag at--risk customers.
+High recall ensures that most churners are identified, while high precision ensures that retention actions are not wasted on low--risk customers.
+The F1 score, used as the primary model selection criterion in the application, balances these two considerations.
+
+The Decision Tree feature importances and tree visualization reveal which attributes most strongly influence churn risk.
+Common drivers include:
+\begin{itemize}[leftmargin=2em]
+  \item short tenure (new customers are more likely to leave),
+  \item month--to--month contracts vs.\ longer commitments,
+  \item high monthly charges relative to delivered value,
+  \item specific combinations of internet service and support options.
+\end{itemize}
+
+\subsection{System Strengths and Limitations}
+
+\textbf{Strengths.}
+The project exhibits several good practices:
+\begin{itemize}[leftmargin=2em]
+  \item Clear separation between preprocessing, model training, and application layers.
+  \item Use of \texttt{scikit-learn} pipelines and column transformers for reproducible preprocessing.
+  \item Serialization of both the preprocessor and models, ensuring consistent transformations between training and inference.
+  \item A user--friendly Streamlit application with meaningful visual feedback and risk summaries.
+\end{itemize}
+
+\textbf{Limitations and future work.}
+Some limitations and possible improvements include:
+\begin{itemize}[leftmargin=2em]
+  \item No hyperparameter search or cross--validation is currently implemented; a grid or randomized search over regularization strength, tree depth, and class weighting could further improve performance.
+  \item The model is trained and evaluated on a single static dataset; monitoring for dataset shift and model drift would be needed in production.
+  \item Class imbalance (if present) is not explicitly handled (e.g., via class weights or resampling techniques).
+  \item Explanations are primarily model--level (via feature importances and tree plots); local explanation methods (e.g., SHAP values) could provide instance--level rationales.
+\end{itemize}
+
+\section{Project Overview, Tech Stack, and Evaluation}
+\label{sec:overview}
+
+\subsection{Project Overview and Milestones}
+
+The project can be naturally organized into the following milestones:
+\begin{enumerate}[leftmargin=2em]
+  \item \textbf{Data acquisition and understanding}
+  \begin{itemize}
+    \item Collect and inspect the Telco churn dataset.
+    \item Perform exploratory data analysis to understand distributions, correlations, and class balance.
+  \end{itemize}
+  \item \textbf{Preprocessing pipeline}
+  \begin{itemize}
+    \item Implement robust handling for missing and malformed values (e.g., \texttt{TotalCharges} blanks).
+    \item Build and validate the \texttt{ColumnTransformer} and pipelines.
+  \end{itemize}
+  \item \textbf{Model development}
+  \begin{itemize}
+    \item Train baseline models (Logistic Regression, Decision Tree).
+    \item Evaluate on a held--out test set and compare metrics.
+  \end{itemize}
+  \item \textbf{Model selection and visualization}
+  \begin{itemize}
+    \item Identify the best model based on F1 score.
+    \item Generate confusion matrix and decision tree visualizations.
+  \end{itemize}
+  \item \textbf{Deployment and UI}
+  \begin{itemize}
+    \item Design and implement the Streamlit application for interactive scoring.
+    \item Integrate preprocessor and model artifacts and add risk visualization.
+  \end{itemize}
+  \item \textbf{Documentation and reporting}
+  \begin{itemize}
+    \item Produce a technical report (this document).
+    \item Write user--oriented README documentation and usage instructions.
+  \end{itemize}
+\end{enumerate}
+
+\subsection{Approved Tech Stack}
+
+The implementation relies on the following core technologies:
+\begin{itemize}[leftmargin=2em]
+  \item \textbf{Programming language:} Python.
+  \item \textbf{Data manipulation:} \texttt{pandas}, \texttt{numpy}.
+  \item \textbf{Machine learning:} \texttt{scikit-learn} (Logistic Regression, Decision Tree, metrics, preprocessing).
+  \item \textbf{Serialization:} \texttt{joblib} for model and pipeline persistence.
+  \item \textbf{Visualization:} \texttt{matplotlib}, \texttt{seaborn}, and \texttt{plotly}.
+  \item \textbf{Web UI:} \texttt{Streamlit} for rapid interactive dashboards.
+  \item \textbf{Typesetting and reporting:} \LaTeX{} for this report.
+\end{itemize}
+
+These libraries form an approved tech stack appropriate for small to medium--scale churn prediction systems and are widely used in industry and academia.
+
+\subsection{Evaluation Criteria}
+
+For this project, success can be assessed along multiple dimensions:
+\begin{itemize}[leftmargin=2em]
+  \item \textbf{Predictive performance}
+  \begin{itemize}
+    \item F1 score on the held--out test set (primary criterion).
+    \item Supporting metrics: accuracy, precision, recall.
+  \end{itemize}
+  \item \textbf{Robustness}
+  \begin{itemize}
+    \item Stability of metrics across different random splits (if evaluated).
+    \item Sensitivity analysis to key features (e.g., tenure, contract).
+  \end{itemize}
+  \item \textbf{Usability}
+  \begin{itemize}
+    \item Clarity and responsiveness of the Streamlit UI.
+    \item Ability for a non--technical user to generate predictions and interpret outputs.
+  \end{itemize}
+  \item \textbf{Engineering quality}
+  \begin{itemize}
+    \item Clean separation of concerns between data preparation, model training, and user interface.
+    \item Reproducibility of training and inference through serialized artifacts.
+    \item Quality and completeness of documentation (report and README).
+  \end{itemize}
+\end{itemize}
+
+\section{Recommended README Structure and GitHub Formatting}
+\label{sec:readme-structure}
+
+To ensure the repository is understandable and usable by both technical and non--technical stakeholders, the main \texttt{README.md} should follow a clear and consistent structure.
+Below is an example outline tailored to this project.
+
+\subsection{Proposed README Structure}
+
+\begin{enumerate}[leftmargin=2em]
+  \item \textbf{Project Overview}
+  \begin{itemize}
+    \item One--paragraph summary of the churn prediction problem and business motivation.
+    \item High--level description of the solution (data pipeline, models, and Streamlit app).
+  \end{itemize}
+
+  \item \textbf{Architecture and Milestones}
+  \begin{itemize}
+    \item Short description of each component:
+    \begin{itemize}
+      \item \texttt{data\_prep.py}: preprocessing and serialization,
+      \item \texttt{model\_training.py}: training, evaluation, figures,
+      \item \texttt{app.py}: customer--facing prediction interface.
+    \end{itemize}
+    \item Bullet list of milestones (as in Section~\ref{sec:overview}), marking completed vs.\ planned steps.
+  \end{itemize}
+
+  \item \textbf{Tech Stack}
+  \begin{itemize}
+    \item List the core technologies and versions (Python, Streamlit, scikit--learn, etc.).
+    \item Optionally include a small table summarizing their roles.
+  \end{itemize}
+
+  \item \textbf{Installation and Setup}
+  \begin{itemize}
+    \item Instructions to clone the repository.
+    \item Environment setup (e.g., \texttt{python -m venv venv}, \texttt{pip install -r requirements.txt}).
+    \item Notes on dataset placement (e.g., \texttt{data/telco\_churn.csv}).
+  \end{itemize}
+
+  \item \textbf{How to Run}
+  \begin{itemize}
+    \item Command to run preprocessing:
+    \begin{verbatim}
+    python data_prep.py
+    \end{verbatim}
+    \item Command to run model training and generate figures:
+    \begin{verbatim}
+    python model_training.py
+    \end{verbatim}
+    \item Command to launch the Streamlit app:
+    \begin{verbatim}
+    streamlit run app.py
+    \end{verbatim}
+    \item Brief explanation of expected outputs and where artifacts are saved.
+  \end{itemize}
+
+  \item \textbf{Evaluation and Results}
+  \begin{itemize}
+    \item Short summary of best model metrics (copying concrete numbers from \texttt{model\_training.py} logs).
+    \item Embedded or linked figures for confusion matrix and decision tree.
+  \end{itemize}
+
+  \item \textbf{Usage and Interpretation}
+  \begin{itemize}
+    \item Step--by--step explanation of how to use the app UI.
+    \item Guidance on interpreting risk levels and probabilities.
+    \item Caveats and ethical considerations (e.g., do not use as the sole basis for high--impact decisions).
+  \end{itemize}
+
+  \item \textbf{Contributing and License}
+  \begin{itemize}
+    \item Contribution guidelines (branching, pull requests, coding style).
+    \item License information (e.g., MIT License) and dataset attribution.
+  \end{itemize}
+\end{enumerate}
+
+\subsection{Formatting Guidelines for GitHub}
+
+To keep the repository professional and readable:
+\begin{itemize}[leftmargin=2em]
+  \item Use Markdown headings (\texttt{\#}, \texttt{\#\#}, \texttt{\#\#\#}) to define a clear hierarchy.
+  \item Prefer bullet lists and tables for summarizing metrics, tech stack, and milestones.
+  \item Wrap code, commands, and file names in backticks (e.g., \texttt{app.py}, \texttt{streamlit run app.py}).
+  \item Include a top--level project badge section if desired (build status, Python version, license).
+  \item Keep line lengths reasonable and use consistent capitalization in headings.
+  \item Store figures (e.g., \texttt{confusion\_matrix.png}, \texttt{decision\_tree.png}) under a dedicated folder (e.g., \texttt{images/}) and reference them with relative paths in the README.
+\end{itemize}
+
+\section{Conclusion}
+
+This project demonstrates a complete, modular customer churn prediction system, from data preprocessing and model training to an interactive deployment interface.
+By combining well--established machine learning techniques with a user--friendly Streamlit app, it enables business stakeholders to explore churn risk scenarios and design targeted retention strategies.
+Future work can extend this foundation with more advanced models, hyperparameter tuning, and monitoring capabilities to support production--grade deployment in real--world environments.
+
+\end{document}
+
