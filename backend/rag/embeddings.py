@@ -1,18 +1,11 @@
 import streamlit as st
-
-try:
-    from langchain_huggingface import HuggingFaceEmbeddings
-except ImportError:
-    from langchain_community.embeddings import HuggingFaceEmbeddings
+from langchain_community.embeddings.fastembed import FastEmbedEmbeddings
 
 @st.cache_resource
 def get_embedding_model():
     """
-    Returns HuggingFace all-MiniLM-L6-v2 embedding model.
-    Cached to prevent reloading the model on every inference.
+    Returns FastEmbed all-MiniLM-L6-v2 embedding model.
+    Cached to prevent reloading the ONNX model on every inference.
+    Massively reduces RAM requirements by removing PyTorch.
     """
-    return HuggingFaceEmbeddings(
-        model_name="sentence-transformers/all-MiniLM-L6-v2",
-        model_kwargs={"device": "cpu"},
-        encode_kwargs={"normalize_embeddings": True}
-    )
+    return FastEmbedEmbeddings(model_name="sentence-transformers/all-MiniLM-L6-v2")
