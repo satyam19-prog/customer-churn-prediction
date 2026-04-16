@@ -1,105 +1,81 @@
-## Customer Churn Prediction (Telco)
+# RetainAI — Agentic Customer Churn Intelligence
 
-A small end-to-end machine learning project that predicts whether a telecom customer is likely to churn, using their demographic, service usage, and billing information.  
-The best model is exposed through a simple Streamlit web app for interactive scoring.
+## Overview
+RetainAI is a production-grade, end-to-end customer churn prediction system that fuses traditional machine learning with agentic AI reasoning. By orchestrating a LangGraph multi-agent workflow over a retrieval-augmented generation (RAG) architecture, the platform moves beyond simple churn probability scores to actively generate, validate, and suggest highly personalized, contextual retention strategies.
 
----
+The system is built with a sleek Streamlit frontend, a robust Scikit-learn ML core with SHAP explainers, and a ChromaDB-powered local vector database. Utilizing state-of-the-art LLMs, RetainAI effectively formulates communication playbooks rooted in telecom benchmarks, ethical AI practices, and past interaction feedback loops.
 
-## 1. Project Structure
-
-- `data_prep.py` – builds the preprocessing pipeline (imputation, scaling, one-hot encoding) and saves:
-  - `models/preprocessor.pkl`
-  - `data/X_train.npy`, `data/X_test.npy`, `data/y_train.npy`, `data/y_test.npy`
-- `model_training.py` – trains Logistic Regression and Decision Tree models, evaluates them, prints metrics, and saves:
-  - `models/lr_model.pkl`, `models/dt_model.pkl`
-  - plots under `plots/` (confusion matrix, decision tree)
-- `app.py` – Streamlit app for entering customer details and viewing churn predictions.
-- `report.tex` – full technical LaTeX report for this project.
-
----
-
-## 2. Tech Stack
-
-- **Language**: Python 3  
-- **Core libraries**: `pandas`, `numpy`, `scikit-learn`, `joblib`  
-- **Visualisation**: `matplotlib`, `seaborn`, `plotly`  
-- **Web app**: `streamlit`  
-
-Install everything via:
-
-```bash
-pip install -r requirements.txt
-```
-
----
-
-## 3. Getting Started
-
-1. **Clone the repo**
-
-```bash
-git clone <your-repo-url>
-cd customer-churn-prediction
-```
-
-2. **Place the dataset**
-
-Put the Telco churn CSV as:
-
+## Architecture
 ```text
-data/telco_churn.csv
+[UI Layer: Streamlit Premium Interface]
+        ↓
+[ML Layer: LR/DT + SHAP Explainer]
+        ↓
+[LangGraph Agent: 5-Node Workflow]
+    ├── risk_analyzer
+    ├── context_retriever ←→ [ChromaDB RAG: 6 Knowledge Docs]
+    ├── strategy_reasoner ←→ [LLM: Groq llama-3.1-8b / Gemini Flash]
+    ├── plan_generator
+    └── validator (retry loop)
+        ↓
+[Structured JSON Retention Plan]
 ```
 
-3. **Create a virtual environment (recommended)**
-
+## Quickstart
+### 1. Clone & install
 ```bash
-python3 -m venv .venv
-source .venv/bin/activate   # Windows: .venv\Scripts\activate
+git clone https://github.com/satyam19-prog/customer-churn-prediction.git
+cd customer-churn-prediction
 pip install -r requirements.txt
 ```
 
----
-
-## 4. Running the Pipeline
-
-1. **Preprocess data**
-
+### 2. Set up API keys
+Copy `.env.example` to `.env` and fill `GROQ_API_KEY`:
 ```bash
-python3 data_prep.py
+cp .env.example .env
 ```
 
-2. **Train and evaluate models**
-
+### 3. Build vector store
 ```bash
-python3 model_training.py
+python backend/rag/build_vectorstore.py
 ```
 
-This prints metrics such as accuracy, precision, recall, F1/F2, R², MSE, MAE, and MASE for both models and saves plots under `plots/`.
-
-3. **Launch the Streamlit app**
-
+### 4. Run app
 ```bash
-streamlit run app.py
+streamlit run frontend/app.py
 ```
 
-Then open the URL shown in the terminal (typically `http://localhost:8501`) to interact with the churn prediction UI.
+## Project Structure
+- `frontend/app.py`: Premium Streamlit dashboard for Single, Batch, and Scenario simulator analyses.
+- `backend/feedback.py`: Core logic for recording ratings and routing negative behaviors back into the MMR vector queries.
+- `backend/models/predict.py`: Scikit-learn inference pipeline with integrated SHAP explainability.
+- `backend/workflows/retention_graph.py`: LangGraph StateGraph connecting all agent nodes into an executable pipeline.
+- `backend/agents/state.py`: TypedDict defining the complex LangGraph execution state parameters.
+- `backend/agents/risk_analyzer.py`: Initial agent node mapping raw churn probabilities into concrete risk tiers.
+- `backend/agents/context_retriever.py`: Integrates dynamic search queries with the RAG ChromaDB system.
+- `backend/agents/strategy_reasoner.py`: Interacts with LLM models to generate comprehensive reasoning traces.
+- `backend/agents/plan_generator.py`: Parses reasoning output chunks into strict JSON implementations.
+- `backend/agents/validator.py`: Asserts correct JSON structures via looping retries against the generator.
+- `backend/rag/embeddings.py`: Configures HuggingFace `all-MiniLM-L6-v2` embedding engine interface.
+- `backend/rag/build_vectorstore.py`: Directory parser storing textual retention knowledge baselines into ChromaDB.
+- `backend/rag/retriever.py`: Exposes MMR diversity search algorithms across the embedded vector knowledge base.
+- `backend/rag/knowledge_base/`: Directory containing targeted markdown metrics supporting the Retrieval-Augmented Generation context.
 
----
+## Agent Workflow
+- **Risk Analyzer**: Categorizes churn probabilities into critical risk tiers while analyzing overarching variable structures.
+- **Context Retriever**: Fetches contextually diverse chunks of telecom retention data based on the extracted risk profiles and explicit user constraints.
+- **Strategy Reasoner**: Produces holistic cognitive traces connecting SHAP driver outputs linearly with contextual playbook facts.
+- **Plan Generator**: Distills the large reasoning narratives directly into predictable, rigid JSON action arrays.
+- **Validator**: Guarantees JSON schema fidelity universally, gating broken formats mapping backward loops within the graph network.
 
-## 5. Interpreting the App
+## RAG Pipeline
+Specialized markdown directories containing specific telecommunications benchmarks, ethical guidelines, and playbook semantics construct our foundational context mechanism. The textual pipeline is parsed systematically into uniformly sized embeddings configured via localized HuggingFace CPU transformers. Querying the constructed ChromaDB retrieval mechanisms guarantees variance via MMR algorithms natively factoring in our negative reinforcement feedback loop vectors natively gathered through UI iterations.
 
-- Fill in customer demographics, subscribed services, and account details in the form.  
-- Click **Predict Churn** to see:
-  - predicted label: “will churn” / “will stay”,
-  - model confidence (probability),
-  - qualitative risk band (Low / Medium / High),
-  - a small probability bar chart.
-- The sidebar shows which model is currently used and summary metrics from the test set.
+## Live Demo
+[STREAMLIT_DEPLOY_URL] | [HF_DEPLOY_URL]
 
----
+## Team
+[Your team names]
 
-## 6. Notes and Extensions
-
-- The LaTeX report in `report.tex` contains a detailed description of the methodology and results.  
-- You can extend this project with more models, hyperparameter tuning, class-imbalance handling, or richer explanations (e.g. SHAP) as next steps.
-
+## Ethical AI Notice
+In absolute alignment with the internal `ethical_ai_retention.md` directives, RetainAI strictly advocates toward unbiased customer engagements void of predatory structures. Outputs automatically indicate AI generation and explicitly highlight that final strategies remain subject entirely to human authorization.
