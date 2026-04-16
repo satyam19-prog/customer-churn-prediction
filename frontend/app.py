@@ -188,10 +188,21 @@ with tab1:
                 "PaymentMethod": st.session_state["rtai_payment"],
                 "MonthlyCharges": st.session_state["rtai_monthly"], "TotalCharges": st.session_state["rtai_total"]
             }
+            st.session_state['rtai_current_customer'] = customer_data
             
             with st.spinner("Running ML Models..."):
-                churn_res = predict_churn(customer_data)
+                st.session_state['rtai_churn_res'] = predict_churn(customer_data)
                 
+            with st.spinner("◈ Agent reasoning (RAG context loading)..."):
+                st.session_state['rtai_plan'] = run_retention_agent(customer_data, st.session_state['rtai_churn_res'])
+                
+            st.session_state["rtai_feedback_given"] = False
+            
+        if 'rtai_churn_res' in st.session_state:
+            customer_data = st.session_state['rtai_current_customer']
+            churn_res = st.session_state['rtai_churn_res']
+            plan = st.session_state.get('rtai_plan', {})
+            
             prob = churn_res["churn_probability"]
             if prob < 0.35: risk_level = "Low"
             elif prob <= 0.60: risk_level = "Medium"
@@ -247,10 +258,6 @@ with tab1:
                 st.plotly_chart(fig_shap, use_container_width=True)
                 
             st.markdown("---")
-            
-            with st.spinner("◈ Agent reasoning (RAG context loading)..."):
-                plan = run_retention_agent(customer_data, churn_res)
-                
             st.markdown("### AI Retention Strategy")
             if plan and isinstance(plan, dict):
                 st.markdown(f"<div style='background-color: #f8f9fa; padding: 10px; border-radius: 5px; color:#495057;'><i>{plan.get('risk_analysis', '')}</i></div>", unsafe_allow_html=True)
@@ -285,6 +292,38 @@ with tab1:
                     st.markdown(f"<span style='font-size:12px; color:#adb5bd;'>Sources: {', '.join(srcs)}</span>", unsafe_allow_html=True)
                     
                 st.info(plan.get("ethical_disclaimer", "AI-generated plan. Human review recommended."))
+
+                st.markdown("---")
+                st.markdown("**Was this retention plan helpful?**")
+                
+                if "rtai_feedback_given" not in st.session_state:
+                    st.session_state["rtai_feedback_given"] = False
+                    
+                if not st.session_state["rtai_feedback_given"]:
+                    comment = st.text_input("Optional comment on this plan:", key="rtai_feedback_comment")
+                    fcol1, fcol2, _ = st.columns([1, 1, 4])
+                    
+                    if fcol1.button("👍 Helpful", use_container_width=True):
+                        from backend.feedback import save_feedback
+                        c_profile = {
+                            "tenure_months": customer_data["tenure"],
+                            "contract_type": customer_data["Contract"],
+                        }
+                        save_feedback(c_profile, plan, rating=1, comment=comment)
+                        st.session_state["rtai_feedback_given"] = True
+                        st.rerun()
+
+                    if fcol2.button("👎 Not helpful", use_container_width=True):
+                        from backend.feedback import save_feedback
+                        c_profile = {
+                            "tenure_months": customer_data["tenure"],
+                            "contract_type": customer_data["Contract"],
+                        }
+                        save_feedback(c_profile, plan, rating=0, comment=comment)
+                        st.session_state["rtai_feedback_given"] = True
+                        st.rerun()
+                else:
+                    st.success("Thank you for your feedback!")
 
 # SECTION 4 — Tab 2: Batch Analysis
 with tab2:
