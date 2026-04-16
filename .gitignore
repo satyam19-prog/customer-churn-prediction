@@ -2,3 +2,8 @@
 __pycache__/
 myenv/
 __pycache__/
+
+.env
+backend/rag/chroma_store/
+__pycache__/
+*.pyc
