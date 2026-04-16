@@ -1,7 +1,11 @@
 import os
+import sys
+import pathlib
+
+sys.path.insert(0, str(pathlib.Path(__file__).parent.parent.parent))
 from collections import Counter
 from langchain_community.document_loaders import DirectoryLoader, TextLoader
-from langchain.text_splitter import RecursiveCharacterTextSplitter
+from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_community.vectorstores import Chroma
 from backend.rag.embeddings import get_embedding_model
 
