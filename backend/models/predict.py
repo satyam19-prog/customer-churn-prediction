@@ -40,7 +40,9 @@ dt_f1 = f1_score(y_test, dt_preds)
 if lr_f1 >= dt_f1:
     BEST_MODEL = lr_model
     MODEL_NAME = "Logistic Regression"
-    explainer = shap.LinearExplainer(BEST_MODEL, X_train)
+    # Slice to first 100 points to massively reduce LinearExplainer RAM footprint
+    # without significantly impacting global baseline metrics
+    explainer = shap.LinearExplainer(BEST_MODEL, X_train[:100])
 else:
     BEST_MODEL = dt_model
     MODEL_NAME = "Decision Tree"
@@ -55,9 +57,9 @@ def predict_churn(customer_data: dict) -> dict:
             if col in df.columns:
                 df[col] = pd.to_numeric(df[col], errors='coerce')
                 
-        # Handle the SeniorCitizen column as int
+        # Handle the SeniorCitizen column as int safely handling NaNs
         if 'SeniorCitizen' in df.columns:
-            df['SeniorCitizen'] = df['SeniorCitizen'].astype(int)
+            df['SeniorCitizen'] = pd.to_numeric(df['SeniorCitizen'], errors='coerce').fillna(0).astype(int)
             
         X_proc = preprocessor.transform(df)
         
