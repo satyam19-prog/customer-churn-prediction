@@ -1,9 +1,26 @@
 import os
-from langchain_community.vectorstores import Chroma
+import streamlit as st
 from backend.rag.embeddings import get_embedding_model
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 CHROMA_STORE_DIR = os.path.join(BASE_DIR, 'backend', 'rag', 'chroma_store')
+
+@st.cache_resource
+def get_vectorstore():
+    # Attempt newer import for forward compatibility
+    try:
+        from langchain_chroma import Chroma
+    except ImportError:
+        from langchain_community.vectorstores import Chroma
+
+    if not os.path.exists(CHROMA_STORE_DIR):
+        raise FileNotFoundError("ChromaDB not found. Run: python backend/rag/build_vectorstore.py")
+
+    return Chroma(
+        persist_directory=CHROMA_STORE_DIR,
+        embedding_function=get_embedding_model(),
+        collection_name="retention_strategies"
+    )
 
 def get_retention_strategies(query: str, risk_level: str, k: int = 6) -> list[str]:
     """
@@ -15,14 +32,7 @@ def get_retention_strategies(query: str, risk_level: str, k: int = 6) -> list[st
     Returns:
         List of strings, each being a relevant text chunk
     """
-    if not os.path.exists(CHROMA_STORE_DIR):
-        raise FileNotFoundError("ChromaDB not found. Run: python backend/rag/build_vectorstore.py")
-
-    vectorstore = Chroma(
-        persist_directory=CHROMA_STORE_DIR,
-        embedding_function=get_embedding_model(),
-        collection_name="retention_strategies"
-    )
+    vectorstore = get_vectorstore()
 
     retriever = vectorstore.as_retriever(
         search_type="mmr",

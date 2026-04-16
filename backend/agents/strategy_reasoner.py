@@ -11,7 +11,7 @@ def get_llm():
     try:
         from langchain_groq import ChatGroq
         if os.environ.get("GROQ_API_KEY"):
-            return ChatGroq(model_name="llama-3.1-8b-instant")
+            return ChatGroq(model_name="llama-3.1-8b-instant", max_retries=1)
     except ImportError:
         pass
         
