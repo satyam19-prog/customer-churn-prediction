@@ -72,10 +72,13 @@ streamlit run frontend/app.py
 Specialized markdown directories containing specific telecommunications benchmarks, ethical guidelines, and playbook semantics construct our foundational context mechanism. The textual pipeline is parsed systematically into uniformly sized embeddings configured via localized HuggingFace CPU transformers. Querying the constructed ChromaDB retrieval mechanisms guarantees variance via MMR algorithms natively factoring in our negative reinforcement feedback loop vectors natively gathered through UI iterations.
 
 ## Live Demo
-[STREAMLIT_DEPLOY_URL] | [HF_DEPLOY_URL]
+[https://customer-churn-prediction-7c4j.onrender.com/](https://customer-churn-prediction-7c4j.onrender.com/)
 
 ## Team
-[Your team names]
+- Satyam Singh
+- Manya Verma
+- Jayadeep Gogulamudi
+- R Ashrith
 
 ## Ethical AI Notice
 In absolute alignment with the internal `ethical_ai_retention.md` directives, RetainAI strictly advocates toward unbiased customer engagements void of predatory structures. Outputs automatically indicate AI generation and explicitly highlight that final strategies remain subject entirely to human authorization.
