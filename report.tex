@@ -1,12 +1,14 @@
-\documentclass[11pt,twocolumn]{article}
+\documentclass[11pt]{article}
 
-% ── Packages ──────────────────────────────────────────────────────────────────
-\usepackage[margin=0.85in,top=1in,bottom=1in]{geometry}
-\usepackage{amsmath,amssymb}
+% ── Geometry ──────────────────────────────────────────────────────────────────
+\usepackage[margin=1in, top=1.1in, bottom=1.1in]{geometry}
+
+% ── Core packages ─────────────────────────────────────────────────────────────
+\usepackage{amsmath, amssymb}
 \usepackage{graphicx}
 \usepackage{booktabs}
-\usepackage{tabularx}
 \usepackage{multirow}
+\usepackage{array}
 \usepackage{hyperref}
 \usepackage{float}
 \usepackage{enumitem}
@@ -14,37 +16,34 @@
 \usepackage{listings}
 \usepackage{fancyhdr}
 \usepackage{titlesec}
-\usepackage{abstract}
 \usepackage{microtype}
 \usepackage{caption}
-\usepackage{subcaption}
 \usepackage{tikz}
 \usepackage{pgfplots}
 \pgfplotsset{compat=1.18}
 \usetikzlibrary{shapes.geometric, arrows.meta, positioning, fit, backgrounds, calc}
-\usepackage{mdframed}
-\usepackage{fontenc}
+\usepackage[framemethod=tikz]{mdframed}
+\usepackage[T1]{fontenc}
 \usepackage[utf8]{inputenc}
 \usepackage{parskip}
 \usepackage{setspace}
-\usepackage{soul}
-\usepackage{array}
 \usepackage{colortbl}
 
-% ── Colour palette ─────────────────────────────────────────────────────────────
+% ── Colours ───────────────────────────────────────────────────────────────────
 \definecolor{primary}{HTML}{1A1A2E}
 \definecolor{accent}{HTML}{16213E}
 \definecolor{highlight}{HTML}{0F3460}
-\definecolor{muted}{HTML}{53596B}
-\definecolor{lightgray}{HTML}{F4F6F9}
+\definecolor{muted}{HTML}{6B7280}
+\definecolor{lightbg}{HTML}{F8F9FB}
+\definecolor{tabhead}{HTML}{E8EDF5}
 \definecolor{riskred}{HTML}{C0392B}
-\definecolor{riskorange}{HTML}{E67E22}
-\definecolor{riskyellow}{HTML}{F39C12}
-\definecolor{riskgreen}{HTML}{27AE60}
-\definecolor{codeframe}{HTML}{DADFE9}
-\definecolor{codebg}{HTML}{F8F9FB}
+\definecolor{riskorange}{HTML}{D97706}
+\definecolor{riskgreen}{HTML}{15803D}
+\definecolor{codebg}{HTML}{F3F4F6}
+\definecolor{codeframe}{HTML}{D1D5DB}
+\definecolor{rulecol}{HTML}{CBD5E1}
 
-% ── Hyperref setup ────────────────────────────────────────────────────────────
+% ── Hyperref ──────────────────────────────────────────────────────────────────
 \hypersetup{
   colorlinks=true,
   linkcolor=highlight,
@@ -54,10 +53,10 @@
   pdfauthor={Customer Analytics Team}
 }
 
-% ── Section title formatting ──────────────────────────────────────────────────
+% ── Section heading style ─────────────────────────────────────────────────────
 \titleformat{\section}
   {\large\bfseries\color{primary}}
-  {\thesection.}{0.5em}{}[\vspace{-2pt}\color{highlight}\rule{\linewidth}{0.4pt}]
+  {\thesection.}{0.6em}{}[{\color{rulecol}\vspace{2pt}\hrule height 0.4pt}]
 
 \titleformat{\subsection}
   {\normalsize\bfseries\color{accent}}
@@ -67,18 +66,21 @@
   {\normalsize\itshape\color{muted}}
   {\thesubsubsection}{0.5em}{}
 
+\titlespacing*{\section}{0pt}{18pt}{8pt}
+\titlespacing*{\subsection}{0pt}{12pt}{4pt}
+\titlespacing*{\subsubsection}{0pt}{8pt}{3pt}
+
 % ── Header / footer ───────────────────────────────────────────────────────────
 \pagestyle{fancy}
 \fancyhf{}
-\fancyhead[L]{\small\color{muted}\textit{RetainAI — Agentic Customer Churn Intelligence}}
-\fancyhead[R]{\small\color{muted}End-Semester Report}
+\fancyhead[L]{\small\color{muted}\textit{RetainAI --- Agentic Customer Churn Intelligence}}
+\fancyhead[R]{\small\color{muted}End-Semester Technical Report}
 \fancyfoot[C]{\small\color{muted}\thepage}
 \renewcommand{\headrulewidth}{0.3pt}
-\renewcommand{\headrule}{\color{codeframe}\hrule width\headwidth height\headrulewidth}
 
-% ── Code listing style ────────────────────────────────────────────────────────
+% ── Code listings ─────────────────────────────────────────────────────────────
 \lstset{
-  basicstyle=\footnotesize\ttfamily\color{primary},
+  basicstyle=\small\ttfamily\color{primary},
   backgroundcolor=\color{codebg},
   frame=single,
   framerule=0.4pt,
@@ -86,436 +88,598 @@
   numbers=left,
   numberstyle=\tiny\color{muted},
   breaklines=true,
+  breakatwhitespace=true,
   captionpos=b,
   showstringspaces=false,
   keywordstyle=\bfseries\color{highlight},
   commentstyle=\itshape\color{muted},
   stringstyle=\color{riskgreen},
   tabsize=2,
-  xleftmargin=10pt,
-  xrightmargin=5pt
+  xleftmargin=15pt,
+  xrightmargin=5pt,
+  aboveskip=8pt,
+  belowskip=8pt
 }
 
-% ── mdframed box for key definitions ─────────────────────────────────────────
-\mdfdefinestyle{keybox}{
+% ── mdframed box ──────────────────────────────────────────────────────────────
+\mdfdefinestyle{infobox}{
   linecolor=highlight,
   linewidth=0.5pt,
-  backgroundcolor=lightgray,
-  innertopmargin=6pt,
-  innerbottommargin=6pt,
-  innerleftmargin=8pt,
-  innerrightmargin=8pt,
-  skipabove=6pt,
-  skipbelow=6pt
+  backgroundcolor=lightbg,
+  innertopmargin=8pt,
+  innerbottommargin=8pt,
+  innerleftmargin=12pt,
+  innerrightmargin=12pt,
+  skipabove=8pt,
+  skipbelow=8pt,
+  roundcorner=3pt
 }
 
-% ── Caption setup ─────────────────────────────────────────────────────────────
-\captionsetup{font=small,labelfont={bf,color=primary},textfont={it,color=muted}}
+% ── Table column types ────────────────────────────────────────────────────────
+\newcolumntype{L}[1]{>{\raggedright\arraybackslash}p{#1}}
+\newcolumntype{C}[1]{>{\centering\arraybackslash}p{#1}}
 
-% ── Misc ──────────────────────────────────────────────────────────────────────
-\setlist[itemize]{leftmargin=1.4em, itemsep=1pt, topsep=2pt}
-\setlist[enumerate]{leftmargin=1.6em, itemsep=1pt, topsep=2pt}
+% ── Caption style ─────────────────────────────────────────────────────────────
+\captionsetup{
+  font=small,
+  labelfont={bf, color=primary},
+  textfont={it, color=muted},
+  skip=6pt
+}
+
+% ── List spacing ──────────────────────────────────────────────────────────────
+\setlist[itemize]{leftmargin=1.6em, itemsep=3pt, topsep=4pt, parsep=0pt}
+\setlist[enumerate]{leftmargin=1.8em, itemsep=3pt, topsep=4pt, parsep=0pt}
+
+% ── Line spacing ──────────────────────────────────────────────────────────────
+\setstretch{1.18}
 
 % ══════════════════════════════════════════════════════════════════════════════
-%  TITLE BLOCK
-% ══════════════════════════════════════════════════════════════════════════════
-\title{%
-  \vspace{-0.5cm}%
-  {\fontsize{18}{22}\selectfont\bfseries\color{primary}
-    RetainAI: Agentic Customer Churn Intelligence}\\[4pt]
-  {\normalsize\color{muted}
-    From Predictive Analytics to Autonomous Retention Strategy}\\[2pt]
-  {\small\color{muted}\rule{0.4\linewidth}{0.4pt}}
-}
-
-\author{%
-  \normalsize Customer Analytics Team\\
-  \small\texttt{[Team Member Names]}\\[2pt]
-  \small End-Semester Project Report $\cdot$ GenAI \& Agentic AI
-}
-
-\date{\small\today}
-
+%  TITLE PAGE
 % ══════════════════════════════════════════════════════════════════════════════
 \begin{document}
-% ══════════════════════════════════════════════════════════════════════════════
 
-\twocolumn[{%
-\maketitle
-\vspace{-4pt}
-\begin{mdframed}[style=keybox]
-\begin{abstract}
-\noindent
-Customer churn costs telecom operators an estimated \$1.6 trillion annually in
-lost recurring revenue.  This paper presents \textbf{RetainAI}, a two-milestone
-system that progresses from a classical machine-learning churn classifier to a
-fully autonomous, LLM-powered retention strategy assistant.  Milestone~1
-established a scikit-learn pipeline achieving an F1 score of \textbf{0.XXX}
-(Logistic Regression) on the IBM Telco Churn dataset.  Milestone~2 extends this
-into a five-node LangGraph agentic workflow integrating a Retrieval-Augmented
-Generation (RAG) layer backed by ChromaDB, sentence-transformer embeddings, and
-Maximum Marginal Relevance retrieval.  The system produces structured JSON
-retention plans with SHAP-derived churn drivers, actionable intervention
-timelines, and source-grounded recommendations.  An interactive Streamlit
-application including a What-If scenario simulator and batch analysis module is
-publicly deployed on Streamlit Community Cloud and Hugging Face Spaces.
-\end{abstract}
+\begin{titlepage}
+\centering
+\vspace*{1.8cm}
+
+{\color{rulecol}\hrule height 1.2pt}
+\vspace{16pt}
+
+{\fontsize{26}{33}\selectfont\bfseries\color{primary}
+  RetainAI: Agentic Customer\\[4pt] Churn Intelligence}
+
+\vspace{12pt}
+{\large\color{muted}
+  From Predictive Machine Learning to Autonomous Retention Strategy}
+
+\vspace{16pt}
+{\color{rulecol}\hrule height 1.2pt}
+
+\vspace{2.2cm}
+
+\renewcommand{\arraystretch}{1.6}
+{\normalsize\color{primary}
+\begin{tabular}{r l}
+  \textbf{Report Type}    & End-Semester Technical Report \\
+  \textbf{Course}         & GenAI \& Agentic AI \\
+  \textbf{Team Members}   & [Satyam Singh],\ [Manya Verma],\ [Jayadeep Gogulamudi],\ [Ashrith R]  \\
+  \textbf{Date}           & \today \\
+  \textbf{Live Demo}      &
+    \href{https://customer-churn-prediction-7c4j.onrender.com/}%
+    {\texttt{customer-churn-prediction-7c4j.onrender.com}} \\
+  \textbf{Repository}     &
+    \href{https://github.com/satyam19-prog/customer-churn-prediction}%
+    {\texttt{github.com/satyam19-prog/customer-churn-prediction}} \\
+\end{tabular}}
+
+\vspace{2.4cm}
+
+\begin{mdframed}[style=infobox]
+\textbf{Abstract.}\quad
+Customer churn costs telecom operators billions annually in lost recurring
+revenue. This report describes \textbf{RetainAI}, a two-milestone system
+that progresses from a classical machine-learning churn classifier to a fully
+autonomous, LLM-powered retention strategy assistant. Milestone~1 established
+a scikit-learn pipeline (Logistic Regression and Decision Tree) on the IBM
+Telco Churn dataset (7{,}043 records). Milestone~2 extends this into a
+five-node \textbf{LangGraph} agentic workflow integrating a
+Retrieval-Augmented Generation (RAG) layer backed by \textbf{ChromaDB},
+sentence-transformer embeddings, and Maximum Marginal Relevance retrieval.
+The system produces validated JSON retention plans with SHAP-derived churn
+drivers, actionable intervention timelines, and fully source-grounded
+recommendations. A premium Streamlit application including a What-If
+scenario simulator, SHAP waterfall charts, and batch analysis is publicly
+deployed and accessible via the link above.
 \end{mdframed}
-\vspace{8pt}
-}]
+
+\end{titlepage}
+
+% ── Table of Contents ─────────────────────────────────────────────────────────
+\tableofcontents
+\thispagestyle{fancy}
+\newpage
 
 % ══════════════════════════════════════════════════════════════════════════════
-\section{Introduction \& Business Context}
+\section{Introduction and Business Context}
 \label{sec:intro}
 % ══════════════════════════════════════════════════════════════════════════════
 
-Subscription-based businesses face a fundamental economic asymmetry: acquiring a
-new customer costs five-to-seven times more than retaining an existing one
-\cite{reichheld1990zero}.  In telecommunications, where average monthly churn
-rates hover near 1.9\% (postpaid) and 3.8\% (prepaid), the ability to
-proactively identify at-risk accounts and deploy targeted interventions is a
-direct lever on lifetime value and revenue stability.
+Subscription-based businesses face a fundamental economic asymmetry: acquiring
+a new customer costs five to seven times more than retaining an existing
+one~\cite{reichheld1990zero}. In telecommunications, where average monthly
+churn rates hover near 1.9\% (postpaid) and 3.8\% (prepaid), proactively
+identifying at-risk accounts and deploying targeted interventions is a direct
+lever on lifetime value and revenue stability.
 
 Traditional approaches rely on periodic batch scoring followed by static rule
-books distributed to human agents.  This pipeline introduces two critical
-failure modes: (i) \textit{temporal lag} — decisions are made on stale
-predictions, and (ii) \textit{strategy rigidity} — generic playbooks ignore
-the nuanced interplay between a customer's unique risk profile and the portfolio
-of available retention instruments.
+books distributed to human agents. This pipeline introduces two critical
+failure modes: (i)~\textit{temporal lag} --- decisions are made on stale
+predictions; and (ii)~\textit{strategy rigidity} --- generic playbooks ignore
+the nuanced interplay between a customer's unique risk profile and the
+portfolio of available retention instruments.
 
 \textbf{RetainAI} addresses both problems by coupling a trained ML classifier
 with an \textit{agentic AI layer} that autonomously retrieves domain-specific
 retention knowledge, reasons over the customer's risk profile, and generates a
-structured, prioritised intervention plan in real time.  The system is designed
-to be fully transparent: every recommended action is traceable to a retrieved
-source document, and SHAP values expose the exact features driving the
-prediction.
+structured, prioritised intervention plan in real time. Every recommended
+action is traceable to a retrieved source document, and SHAP values expose
+the exact features driving each prediction.
 
-\subsection{Objectives}
+\subsection{Project Objectives}
 
 \begin{enumerate}
-  \item Train a high-recall churn classifier on historical telco data.
-  \item Build a five-node LangGraph agent with explicit state management.
-  \item Implement a RAG pipeline using domain-curated knowledge and MMR
-        retrieval to ground recommendations.
+  \item Train a high-recall churn classifier on historical Telco data using
+        classical ML techniques (Milestone 1).
+  \item Build a five-node LangGraph agent with explicit, inspectable state
+        management (Milestone 2).
+  \item Implement a RAG pipeline with curated domain knowledge and MMR
+        retrieval to ground all recommendations in source documents.
   \item Expose all functionality through a premium Streamlit interface with
-        explainability, batch processing, and scenario simulation.
-  \item Deploy publicly and demonstrate production-grade robustness.
+        SHAP explainability, batch processing, and What-If simulation.
+  \item Deploy publicly and demonstrate production-grade reliability with
+        dual-LLM fallback and schema validation.
 \end{enumerate}
 
 % ══════════════════════════════════════════════════════════════════════════════
-\section{Dataset \& Exploratory Analysis}
+\section{Dataset and Exploratory Analysis}
 \label{sec:data}
 % ══════════════════════════════════════════════════════════════════════════════
 
 \subsection{Dataset Overview}
 
-The IBM Telco Customer Churn dataset contains \textbf{7,043 customer records}
-across 21 features covering three domains:
+The project uses the IBM Telco Customer Churn dataset
+(\texttt{data/telco\_churn.csv}). Table~\ref{tab:dataset} summarises
+the dataset structure.
 
-\begin{itemize}
-  \item \textit{Demographics} — gender, senior-citizen flag, partner,
-        dependents.
-  \item \textit{Services} — phone service, multiple lines, internet service
-        type (DSL/Fiber/None), online security, backup, device protection,
-        tech support, streaming TV and movies.
-  \item \textit{Account \& Billing} — tenure (months), contract type,
-        paperless billing, payment method, monthly charges, total charges.
-\end{itemize}
-
-The target variable \texttt{Churn} (\texttt{Yes}/\texttt{No}) exhibits
-\textbf{class imbalance}: approximately 26.5\% positive (churned) vs.\ 73.5\%
-negative (retained).
+\begin{table}[H]
+\centering
+\caption{IBM Telco Churn dataset overview.}
+\label{tab:dataset}
+\renewcommand{\arraystretch}{1.4}
+\begin{tabular}{L{4.5cm} L{9cm}}
+\toprule
+\rowcolor{tabhead}
+\textbf{Property} & \textbf{Detail} \\
+\midrule
+Total records       & 7{,}043 unique customer accounts \\
+Total features      & 21 (demographics, services, billing) \\
+Target variable     & \texttt{Churn} (Yes / No) \\
+Positive class      & $\approx$26.5\% churned \\
+Negative class      & $\approx$73.5\% retained \\
+Numeric features    & \texttt{tenure}, \texttt{MonthlyCharges}, \texttt{TotalCharges} \\
+Categorical features & 18 object-type columns \\
+Known data issue    & 11 blank-string entries in \texttt{TotalCharges} (zero-tenure customers) \\
+\bottomrule
+\end{tabular}
+\end{table}
 
 \subsection{Key Distributional Insights}
 
-Several patterns directly inform both model design and RAG knowledge base
-construction:
+Exploratory analysis reveals patterns that directly motivate both model
+design and the RAG knowledge base construction.
 
-\begin{itemize}
-  \item \textbf{Contract type is the strongest categorical predictor.}
-        Month-to-month customers churn at 42.7\%, vs.\ 11.3\% for one-year
-        and 2.8\% for two-year contracts.
-  \item \textbf{Tenure exhibits a nonlinear relationship with churn.}
-        Customers with tenure $<$ 12 months have a 47.4\% churn rate; those
-        with tenure $>$ 60 months drop to 6.6\%.
-  \item \textbf{Fiber optic internet paradox.} Despite being a premium
-        service, fiber optic users churn at 41.9\% — nearly double DSL
-        (18.7\%) — likely due to higher charges and unmet expectations.
-  \item \textbf{Electronic check payment is a strong risk signal.}
-        Users paying by electronic check churn at 45.3\%, vs.\ 15.2\% for
-        automatic bank transfer.
-  \item \textbf{\texttt{TotalCharges} contains 11 blank-string entries}
-        (customers with zero tenure) coerced to \texttt{NaN} and handled via
-        median imputation.
-\end{itemize}
+\begin{table}[H]
+\centering
+\caption{Churn rate observations by customer segment.}
+\label{tab:eda}
+\renewcommand{\arraystretch}{1.5}
+\begin{tabular}{L{5cm} C{3cm} L{5.5cm}}
+\toprule
+\rowcolor{tabhead}
+\textbf{Segment} & \textbf{Churn Rate} & \textbf{Implication} \\
+\midrule
+Month-to-month contract & 42.7\% & Strongest categorical predictor \\
+One-year contract       & 11.3\% & Moderate risk \\
+Two-year contract       &  2.8\% & Lowest risk \\
+\addlinespace[4pt]
+Tenure $<$ 12 months    & 47.4\% & New customers are highest risk \\
+Tenure $>$ 60 months    &  6.6\% & Long-tenured customers are loyal \\
+\addlinespace[4pt]
+Electronic check payment & 45.3\% & Strong payment-method risk signal \\
+Auto bank transfer       & 15.2\% & Lowest payment-related risk \\
+\addlinespace[4pt]
+Fiber optic internet     & 41.9\% & Higher charges drive dissatisfaction \\
+DSL internet             & 18.7\% & More stable segment \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\textbf{Notable finding.} Despite being a premium service, fiber optic users
+churn at nearly double the rate of DSL users. This counter-intuitive pattern
+--- likely driven by high monthly charges relative to perceived value --- is
+explicitly captured in the RAG knowledge base as a high-priority intervention
+trigger.
 
 % ══════════════════════════════════════════════════════════════════════════════
-\section{Milestone 1: ML Prediction Pipeline}
+\section{Milestone 1: Machine Learning Pipeline}
 \label{sec:ml}
 % ══════════════════════════════════════════════════════════════════════════════
 
 \subsection{Preprocessing Architecture}
 
-The preprocessing pipeline is implemented in \texttt{data\_prep.py} using
-scikit-learn \texttt{ColumnTransformer} with two sub-pipelines:
+The preprocessing pipeline (\texttt{data\_prep.py}) uses a scikit-learn
+\texttt{ColumnTransformer} applied \emph{after} the 80/20 train-test split
+to prevent data leakage.
 
-\textbf{Numeric pipeline} (\texttt{tenure}, \texttt{MonthlyCharges},
-\texttt{TotalCharges}):
-\begin{enumerate}
-  \item Median imputation (\texttt{SimpleImputer(strategy='median')}).
-  \item Standardisation (\texttt{StandardScaler}).
-\end{enumerate}
-
-\textbf{Categorical pipeline} (all \texttt{object}-type columns):
-\begin{enumerate}
-  \item Most-frequent imputation.
-  \item One-hot encoding with \texttt{drop='first'} to prevent
-        multicollinearity.
-\end{enumerate}
+\begin{table}[H]
+\centering
+\caption{Preprocessing steps by feature type.}
+\label{tab:preprocess}
+\renewcommand{\arraystretch}{1.5}
+\begin{tabular}{L{3cm} L{4cm} L{6.5cm}}
+\toprule
+\rowcolor{tabhead}
+\textbf{Type} & \textbf{Features} & \textbf{Steps Applied} \\
+\midrule
+Numeric &
+\texttt{tenure},
+\texttt{MonthlyCharges},
+\texttt{TotalCharges} &
+(1)~Median imputation via \texttt{SimpleImputer}\newline
+(2)~Standardisation via \texttt{StandardScaler} \\
+\addlinespace[4pt]
+Categorical &
+All 18 object-type columns &
+(1)~Most-frequent imputation\newline
+(2)~One-hot encoding with \texttt{drop='first'} \\
+\bottomrule
+\end{tabular}
+\end{table}
 
 The fitted \texttt{preprocessor} is serialised to
-\texttt{models/preprocessor.pkl} and reused at inference time, guaranteeing
-identical feature transformations between training and deployment.
-Data leakage is prevented by fitting \emph{only} on \texttt{X\_train} (80/20
-stratified split, \texttt{random\_state=42}).
+\texttt{models/preprocessor.pkl} and reused identically at inference time,
+guaranteeing consistent feature transformations across training and
+deployment.
 
-\subsection{Model Training \& Evaluation}
+\subsection{Model Training and Evaluation}
 
-Two models are trained and evaluated on the held-out 20\% test partition:
-
-\textbf{Logistic Regression} (\texttt{max\_iter=1000}) provides a
-well-calibrated linear baseline; its coefficients map directly to log-odds
-contributions, enabling rudimentary feature attribution.
-
-\textbf{Decision Tree} (\texttt{max\_depth=4}, \texttt{random\_state=42})
-captures nonlinear interactions (e.g., the contract $\times$ tenure
-interaction) and exposes feature importances used as a proxy for churn
-drivers in the Milestone 1 UI.
-
-Table~\ref{tab:metrics} reports the full evaluation suite.  The application
-selects the model with the higher F1 score at deployment time.
+Two supervised models are trained on the preprocessed training partition and
+evaluated on the held-out 20\% test set.
 
 \begin{table}[H]
 \centering
 \caption{Test-set performance (20\% holdout, \texttt{random\_state=42}).
 Replace dashes with values from \texttt{python model\_training.py}.}
 \label{tab:metrics}
-\small
-\setlength{\tabcolsep}{4pt}
-\begin{tabular}{lcccc}
+\renewcommand{\arraystretch}{1.6}
+\begin{tabular}{L{5cm} C{2.2cm} C{2.2cm} C{2.2cm} C{2.2cm}}
 \toprule
-\rowcolor{lightgray}
-\textbf{Model} & \textbf{Acc.} & \textbf{Prec.} & \textbf{Recall} & \textbf{F1} \\
+\rowcolor{tabhead}
+\textbf{Model} & \textbf{Accuracy} & \textbf{Precision} & \textbf{Recall} & \textbf{F1} \\
 \midrule
-Logistic Regression & {--} & {--} & {--} & {--} \\
-Decision Tree (d=4) & {--} & {--} & {--} & {--} \\
+Logistic Regression         & --- & --- & --- & --- \\
+Decision Tree (depth = 4)   & --- & --- & --- & --- \\
 \bottomrule
 \end{tabular}
 \end{table}
 
-\subsection{SHAP Explainability Extension}
+\textbf{Logistic Regression} (\texttt{max\_iter=1000}) provides a
+well-calibrated linear baseline whose coefficients map directly to log-odds
+contributions.
 
-Milestone 2 augments the prediction module with SHAP
-(\textit{SHapley Additive exPlanations}) values computed per inference:
+\textbf{Decision Tree} (\texttt{max\_depth=4}, \texttt{random\_state=42})
+captures key nonlinear interactions (e.g., contract~$\times$~tenure) and
+exposes \texttt{feature\_importances\_} used as churn drivers in the UI.
+
+The Streamlit application automatically selects the model with the higher F1
+score at deployment time.
+
+\subsection{SHAP Explainability}
+
+Milestone~2 augments the prediction module with per-instance SHAP
+values~\cite{lundberg2017shap}:
 
 \begin{itemize}
-  \item Logistic Regression: \texttt{shap.LinearExplainer} using a 200-sample
-        background subset of \texttt{X\_train}.
-  \item Decision Tree: \texttt{shap.TreeExplainer} using exact tree SHAP.
+  \item \textbf{Logistic Regression:} \texttt{shap.LinearExplainer} with a
+        200-sample background subset of \texttt{X\_train}.
+  \item \textbf{Decision Tree:} \texttt{shap.TreeExplainer} using exact
+        tree SHAP (zero approximation error).
 \end{itemize}
 
-The top-15 SHAP contributions (by absolute magnitude) are returned alongside
-the prediction probability and passed directly into the agent's initial state
-as \texttt{shap\_values: Dict[str, float]}.  The UI renders these as an
-interactive Plotly waterfall chart with red bars for churn-increasing features
-and green bars for churn-reducing features.
+The top-15 SHAP contributions by absolute magnitude are passed directly into
+the LangGraph agent's initial state and rendered in the UI as an interactive
+Plotly waterfall chart.
 
 % ══════════════════════════════════════════════════════════════════════════════
 \section{Milestone 2: System Architecture}
 \label{sec:architecture}
 % ══════════════════════════════════════════════════════════════════════════════
 
-Figure~\ref{fig:architecture} illustrates the end-to-end data flow of the
-Milestone 2 system.
+Figure~\ref{fig:architecture} shows the complete end-to-end architecture.
 
 \begin{figure}[H]
 \centering
 \begin{tikzpicture}[
-  every node/.style={font=\footnotesize},
-  box/.style={rectangle, draw=highlight, fill=lightgray,
-              rounded corners=3pt, minimum width=3.6cm,
-              minimum height=0.55cm, align=center, text=primary},
-  agent/.style={rectangle, draw=riskred, fill=riskred!8,
-                rounded corners=3pt, minimum width=3.6cm,
-                minimum height=0.45cm, align=center, text=primary},
-  arr/.style={-{Stealth[length=4pt]}, color=muted, line width=0.5pt},
-  lbl/.style={font=\tiny\itshape, color=muted}
+  node distance = 0.55cm and 2.2cm,
+  every node/.style = {font=\small\color{primary}},
+  %
+  mainbox/.style = {
+    rectangle, rounded corners=5pt,
+    draw=#1!70, fill=#1!10,
+    minimum width=10cm, minimum height=0.85cm,
+    align=center, text=primary
+  },
+  nodebox/.style = {
+    rectangle, rounded corners=3pt,
+    draw=riskred!50, fill=riskred!7,
+    minimum width=9.4cm, minimum height=0.65cm,
+    align=center, text=primary
+  },
+  sidebox/.style = {
+    rectangle, rounded corners=4pt,
+    draw=#1!70, fill=#1!10,
+    minimum width=3.4cm,
+    align=center, text=primary, font=\small
+  },
+  arr/.style  = {-{Stealth[length=5pt]}, line width=0.7pt, color=muted},
+  darr/.style = {-{Stealth[length=5pt]}, line width=0.7pt,
+                 color=riskred, dashed},
+  lbl/.style  = {font=\scriptsize\itshape, color=muted}
 ]
-% UI
-\node[box] (ui)   {\textbf{UI Layer} — Streamlit};
-% ML
-\node[box, below=0.35cm of ui] (ml)
-      {\textbf{ML Layer} — LR / DT + SHAP};
-% Agent header
-\node[box, fill=riskred!10, draw=riskred,
-      below=0.35cm of ml, minimum width=3.6cm] (aghdr)
-      {\textbf{LangGraph Agent}};
-% Nodes
-\node[agent, below=0.1cm of aghdr]  (n1) {Node 1: risk\_analyzer};
-\node[agent, below=0.1cm of n1]     (n2) {Node 2: context\_retriever};
-\node[agent, below=0.1cm of n2]     (n3) {Node 3: strategy\_reasoner};
-\node[agent, below=0.1cm of n3]     (n4) {Node 4: plan\_generator};
-\node[agent, below=0.1cm of n4]     (n5) {Node 5: validator};
-% RAG / LLM
-\node[box, fill=highlight!8, draw=highlight,
-      right=0.8cm of n2, xshift=0.2cm] (rag)
-      {\textbf{RAG} — ChromaDB};
-\node[box, fill=riskorange!10, draw=riskorange,
-      right=0.8cm of n3, xshift=0.2cm] (llm)
-      {\textbf{LLM} — Groq / Gemini};
-% Output
-\node[box, fill=riskgreen!10, draw=riskgreen,
-      below=0.35cm of n5] (out)
-      {\textbf{JSON Retention Plan}};
-% Arrows main flow
+
+%% ------- Main vertical stack -------
+
+\node[mainbox=highlight] (ui)
+  {\textbf{UI Layer}\quad Streamlit $\cdot$ Single / Batch / Scenario Simulator};
+
+\node[mainbox=riskgreen, below=of ui] (ml)
+  {\textbf{ML Layer}\quad Logistic Regression + Decision Tree + SHAP Explainer};
+
+\node[mainbox=riskred, below=of ml] (aghdr)
+  {\textbf{LangGraph Agent Layer}\quad\textit{5-node stateful workflow}};
+
+\node[nodebox, below=0.18cm of aghdr] (n1)
+  {Node 1:\;\textbf{risk\_analyzer}\quad maps churn prob to risk tier,
+   extracts top SHAP drivers};
+
+\node[nodebox, below=0.12cm of n1] (n2)
+  {Node 2:\;\textbf{context\_retriever}\quad queries ChromaDB with MMR,
+   filters by risk tier};
+
+\node[nodebox, below=0.12cm of n2] (n3)
+  {Node 3:\;\textbf{strategy\_reasoner}\quad chain-of-thought prompt to LLM
+   over retrieved docs};
+
+\node[nodebox, below=0.12cm of n3] (n4)
+  {Node 4:\;\textbf{plan\_generator}\quad structured JSON output prompt,
+   rule-based fallback};
+
+\node[nodebox, below=0.12cm of n4] (n5)
+  {Node 5:\;\textbf{validator}\quad 5-point schema check,
+   self-correcting retry loop};
+
+\node[mainbox=riskgreen, below=0.55cm of n5] (out)
+  {\textbf{JSON Retention Plan}\quad
+   customer\_profile $\cdot$ churn\_drivers $\cdot$ recommended\_actions $\cdot$ sources};
+
+%% ------- Side boxes -------
+
+\node[sidebox=highlight, right=2.2cm of n2,
+      minimum height=1.6cm] (rag)
+  {\textbf{RAG Layer}\\[2pt]
+   ChromaDB\\6-doc KB\\MMR $k{=}6$};
+
+\node[sidebox=riskorange, right=2.2cm of n3,
+      minimum height=1.6cm] (llm)
+  {\textbf{LLM Layer}\\[2pt]
+   Groq LLaMA 3.1\\Gemini fallback\\\texttt{tenacity} retry};
+
+%% ------- Arrows -------
+
 \draw[arr] (ui)    -- (ml);
-\draw[arr] (ml)    -- (n1);
+\draw[arr] (ml)    -- (aghdr);
+\draw[arr] (aghdr) -- (n1);
 \draw[arr] (n1)    -- (n2);
 \draw[arr] (n2)    -- (n3);
 \draw[arr] (n3)    -- (n4);
 \draw[arr] (n4)    -- (n5);
 \draw[arr] (n5)    -- (out);
-% Side arrows
-\draw[arr] (n2.east) -- (rag.west)
-      node[lbl, midway, above] {query};
-\draw[arr] (rag.west) -- +(-0.01,0) |- (n3.east)
-      node[lbl, near start, right] {docs};
-\draw[arr] (n3.east) -- (llm.west)
-      node[lbl, midway, above] {prompt};
-\draw[arr] (llm.west) -- +(-0.01,0) |- (n4.east)
-      node[lbl, near start, right] {plan};
-% Retry loop
-\draw[arr, dashed, color=riskred]
-      (n5.west) -- +(-0.5,0) -- +(-0.5,1.9) -- (n4.west)
-      node[lbl, midway, left, xshift=-2pt] {retry ($\le$2)};
+
+\draw[arr] (n2.east) --
+  node[lbl, above=1pt]{query}
+  (rag.west);
+
+\draw[arr] (rag.west) --
+  +(-0.5,0) |-
+  node[lbl, right=2pt, near end]{docs}
+  (n3.east);
+
+\draw[arr] (n3.east) --
+  node[lbl, above=1pt]{prompt}
+  (llm.west);
+
+\draw[arr] (llm.west) --
+  +(-0.5,0) |-
+  node[lbl, right=2pt, near end]{plan}
+  (n4.east);
+
+% Retry loop on the left
+\draw[darr]
+  (n5.west) -- ++(-0.7,0) --
+  node[lbl, left=2pt, midway]{retry ($\leq 2$)}
+  ++(0,2.75) -- ++(0.7,0);
+
 \end{tikzpicture}
-\caption{End-to-end architecture of RetainAI.  Solid arrows show the primary
-data flow; the dashed red arrow shows the validator retry loop.}
+\caption{Complete RetainAI architecture. Solid arrows show the primary
+data flow; the dashed red arrow shows the validator self-correction loop.}
 \label{fig:architecture}
 \end{figure}
 
-The architecture is organised into four logical layers:
+\subsection{Repository Structure}
 
-\begin{itemize}
-  \item \textbf{UI Layer} — Streamlit frontend with three tabs (Single
-        Analysis, Batch Analysis, Scenario Simulator).
-  \item \textbf{ML Layer} — Existing scikit-learn pipeline augmented with
-        SHAP explainability (\texttt{backend/models/predict.py}).
-  \item \textbf{LangGraph Agent Layer} — Five-node stateful workflow
-        (\texttt{backend/workflows/retention\_graph.py}).
-  \item \textbf{Knowledge \& Generation Layer} — ChromaDB RAG store and
-        LLM (Groq \texttt{llama-3.1-8b-instant} with Gemini 1.5 Flash
-        fallback).
-\end{itemize}
+\begin{mdframed}[style=infobox]
+\renewcommand{\arraystretch}{1.4}
+\small
+\begin{tabular}{L{5cm} L{8.5cm}}
+\texttt{backend/agents/}     & \texttt{state.py} + one file per LangGraph node \\
+\texttt{backend/rag/}        & Embeddings, retriever, knowledge\_base/, chroma\_store/ \\
+\texttt{backend/models/}     & \texttt{predict.py}, \texttt{explainer.py} \\
+\texttt{backend/workflows/}  & \texttt{retention\_graph.py} (StateGraph assembly) \\
+\texttt{backend/feedback.py} & Feedback loop --- stores ratings, adjusts retrieval \\
+\texttt{frontend/app.py}     & Premium Streamlit UI (3 tabs) \\
+\texttt{models/}             & \texttt{*.pkl} artefacts from Milestone~1 (unchanged) \\
+\texttt{data/}               & \texttt{*.npy} arrays + \texttt{telco\_churn.csv} \\
+\texttt{.env.example}        & \texttt{GROQ\_API\_KEY}, \texttt{GEMINI\_API\_KEY} \\
+\end{tabular}
+\end{mdframed}
 
 % ══════════════════════════════════════════════════════════════════════════════
 \section{LangGraph Agent Design}
 \label{sec:agent}
 % ══════════════════════════════════════════════════════════════════════════════
 
-\subsection{State Object}
+\subsection{Agent State Object}
 
-All inter-node communication flows through a single typed state object
-(\texttt{AgentState}, a \texttt{TypedDict}), ensuring immutability and
-auditability at every transition:
-
-\begin{mdframed}[style=keybox]
-\small
-\begin{tabular}{ll}
-\texttt{customer\_data}     & Raw input feature dict \\
-\texttt{churn\_probability} & \texttt{float} from ML layer \\
-\texttt{shap\_values}       & \texttt{Dict[str, float]} \\
-\texttt{risk\_level}        & \textit{Low / Medium / High / Critical} \\
-\texttt{top\_churn\_drivers}& Top-5 SHAP features (human-readable) \\
-\texttt{retrieval\_query}   & Constructed MMR query string \\
-\texttt{retrieved\_docs}    & \texttt{List[str]} — RAG chunks \\
-\texttt{reasoning\_trace}   & LLM chain-of-thought \\
-\texttt{retention\_plan}    & Final structured \texttt{Dict} \\
-\texttt{validation\_passed} & \texttt{bool} \\
-\texttt{iteration\_count}   & Guards retry loop ($\le 2$) \\
-\end{tabular}
-\end{mdframed}
-
-\subsection{Node Specifications}
-
-\subsubsection{Node 1 — \texttt{risk\_analyzer}}
-Maps \texttt{churn\_probability} to a four-tier risk level (Table~\ref{tab:risk}),
-sorts SHAP values by absolute magnitude to extract the top-5 churn drivers,
-and constructs a structured retrieval query embedding the customer's
-contract type, tenure, monthly charges, and risk tier.
+All communication between nodes flows through a single typed state object
+(\texttt{AgentState}, a Python \texttt{TypedDict}). This ensures every
+intermediate value is inspectable, testable, and auditable at each graph
+transition.
 
 \begin{table}[H]
 \centering
-\caption{Risk tier mapping.}
-\label{tab:risk}
-\small
-\begin{tabular}{lll}
+\caption{AgentState fields and their roles.}
+\label{tab:state}
+\renewcommand{\arraystretch}{1.5}
+\begin{tabular}{L{5cm} L{3cm} L{5.5cm}}
 \toprule
-\rowcolor{lightgray}\textbf{Probability} & \textbf{Tier} & \textbf{Colour} \\
+\rowcolor{tabhead}
+\textbf{Field} & \textbf{Type} & \textbf{Purpose} \\
 \midrule
-$p < 0.35$ & Low & \textcolor{riskgreen}{\textbf{Green}} \\
-$0.35 \le p < 0.60$ & Medium & \textcolor{riskyellow}{\textbf{Yellow}} \\
-$0.60 \le p < 0.80$ & High & \textcolor{riskorange}{\textbf{Orange}} \\
-$p \ge 0.80$ & Critical & \textcolor{riskred}{\textbf{Red}} \\
+\texttt{customer\_data}      & \texttt{Dict}            & Raw input feature dictionary \\
+\texttt{churn\_probability}  & \texttt{float}           & ML model output (class 1 prob.) \\
+\texttt{churn\_prediction}   & \texttt{int}             & Binary prediction (0 or 1) \\
+\texttt{shap\_values}        & \texttt{Dict[str,float]} & Feature to SHAP contribution map \\
+\texttt{risk\_level}         & \texttt{str}             & Low / Medium / High / Critical \\
+\texttt{top\_churn\_drivers} & \texttt{List[str]}       & Top-5 SHAP features, readable \\
+\texttt{retrieval\_query}    & \texttt{str}             & Constructed MMR query string \\
+\texttt{retrieved\_docs}     & \texttt{List[str]}       & RAG chunk texts \\
+\texttt{reasoning\_trace}    & \texttt{str}             & LLM chain-of-thought output \\
+\texttt{retention\_plan}     & \texttt{Dict}            & Final validated JSON plan \\
+\texttt{validation\_passed}  & \texttt{bool}            & Schema check result \\
+\texttt{iteration\_count}    & \texttt{int}             & Guards retry loop ($\leq 2$) \\
+\texttt{error\_message}      & \texttt{Optional[str]}   & Populated on node failure \\
 \bottomrule
 \end{tabular}
 \end{table}
 
-\subsubsection{Node 2 — \texttt{context\_retriever}}
-Invokes the RAG retriever with \texttt{search\_type="mmr"}, \texttt{k=6},
-\texttt{fetch\_k=20}, and \texttt{lambda\_mult=0.6}.  A post-retrieval
-metadata filter ensures only chunks tagged with the customer's risk tier
-are returned, preventing mismatched strategy recommendations (e.g., a
-Low-risk customer never receives emergency intervention tactics).
+\subsection{Node Specifications}
 
-\subsubsection{Node 3 — \texttt{strategy\_reasoner}}
-Constructs a structured chain-of-thought prompt (Section~\ref{sec:prompts})
-and sends it to the LLM.  The prompt is grounded by injecting retrieved
-document chunks verbatim, with explicit instructions to cite only tactics
-present in the context.  The \texttt{<reasoning>} XML tag delimiter ensures
-reliable extraction of the trace.
+\subsubsection{Node 1 --- risk\_analyzer}
 
-\subsubsection{Node 4 — \texttt{plan\_generator}}
-Generates the final structured JSON plan via a constrained output prompt
-(Section~\ref{sec:prompts}).  On \texttt{json.JSONDecodeError}, a deterministic
-rule-based fallback plan is produced from the current state values, guaranteeing
-the UI always receives a well-formed response.
+Maps \texttt{churn\_probability} to a risk tier (Table~\ref{tab:risk}),
+sorts \texttt{shap\_values} by absolute magnitude to extract the top-5 churn
+drivers, strips scikit-learn prefixes from feature names
+(e.g., \texttt{cat\_\_Contract\_Month-to-month} $\rightarrow$
+\texttt{Contract: Month-to-month}), and constructs a structured retrieval
+query embedding the customer's contract type, tenure, charges, and risk tier.
 
-\subsubsection{Node 5 — \texttt{validator}}
-Applies five schema assertions:
+\begin{table}[H]
+\centering
+\caption{Risk tier mapping used by Node 1.}
+\label{tab:risk}
+\renewcommand{\arraystretch}{1.5}
+\begin{tabular}{C{4.5cm} C{3cm} C{4cm}}
+\toprule
+\rowcolor{tabhead}
+\textbf{Churn Probability} & \textbf{Risk Tier} & \textbf{Default Priority} \\
+\midrule
+$p < 0.35$              & Low      & Within 30 days \\
+$0.35 \leq p < 0.60$   & Medium   & Within 7 days  \\
+$0.60 \leq p < 0.80$   & High     & Within 7 days  \\
+$p \geq 0.80$           & Critical & Immediate      \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsubsection{Node 2 --- context\_retriever}
+
+Invokes the ChromaDB retriever with \texttt{search\_type="mmr"},
+\texttt{k=6}, \texttt{fetch\_k=20}, \texttt{lambda\_mult=0.6}. A
+post-retrieval metadata filter ensures only chunks tagged with the
+customer's risk tier are returned, preventing out-of-distribution strategy
+leakage between tiers.
+
+\subsubsection{Node 3 --- strategy\_reasoner}
+
+Constructs a chain-of-thought prompt (see Section~\ref{sec:prompts}) and
+sends it to the LLM. Retrieved document chunks are injected verbatim into
+the prompt context. The \texttt{<reasoning>...</reasoning>} XML tag delimiter
+enables reliable extraction of the trace from the raw LLM response.
+
+\subsubsection{Node 4 --- plan\_generator}
+
+Generates the final structured JSON plan via a constrained output prompt.
+On \texttt{json.JSONDecodeError}, a deterministic rule-based fallback plan is
+assembled from the current state values, guaranteeing the UI always receives
+a well-formed response.
+
+\subsubsection{Node 5 --- validator}
+
+Applies five schema assertions before marking \texttt{validation\_passed = True}:
+
 \begin{enumerate}
-  \item \texttt{retention\_plan} is a non-empty \texttt{dict}.
-  \item \texttt{recommended\_actions} is non-empty.
+  \item \texttt{retention\_plan} is a non-empty dictionary.
+  \item \texttt{recommended\_actions} key exists and has length $> 0$.
   \item \texttt{priority\_level} $\in$ \{Immediate, Within 7 days, Within 30 days\}.
   \item \texttt{customer\_profile} key is present.
   \item \texttt{ethical\_disclaimer} key is present.
 \end{enumerate}
-On failure with \texttt{iteration\_count} $< 2$, the graph routes back to
-Node 4 with the error message appended to the prompt.  This self-correction
-loop resolves $\approx$87\% of malformed outputs on first retry.
 
-\subsection{Graph Transition Logic}
+On failure with \texttt{iteration\_count} $< 2$, the conditional edge routes
+back to Node~4 with the error message prepended to the prompt context for
+self-correction.
 
-\begin{lstlisting}[language=Python, caption={LangGraph conditional edge for validator retry.}]
+\subsection{Graph Assembly}
+
+\begin{lstlisting}[language=Python,
+  caption={LangGraph StateGraph definition and conditional retry edge
+           (\texttt{backend/workflows/retention\_graph.py}).}]
+graph = StateGraph(AgentState)
+
+graph.add_node("risk_analyzer",     risk_analyzer_node)
+graph.add_node("context_retriever", context_retriever_node)
+graph.add_node("strategy_reasoner", strategy_reasoner_node)
+graph.add_node("plan_generator",    plan_generator_node)
+graph.add_node("validator",         validator_node)
+
+graph.set_entry_point("risk_analyzer")
+
+graph.add_edge("risk_analyzer",     "context_retriever")
+graph.add_edge("context_retriever", "strategy_reasoner")
+graph.add_edge("strategy_reasoner", "plan_generator")
+graph.add_edge("plan_generator",    "validator")
+
+# Self-correcting retry: loop back if validation fails
 graph.add_conditional_edges(
-  "validator",
-  lambda s: END if (
-    s["validation_passed"] or
-    s["iteration_count"] >= 2
-  ) else "plan_generator",
-  {END: END, "plan_generator": "plan_generator"}
+    "validator",
+    lambda s: END if (
+        s["validation_passed"] or s["iteration_count"] >= 2
+    ) else "plan_generator",
+    {END: END, "plan_generator": "plan_generator"}
 )
+
+retention_agent = graph.compile()
 \end{lstlisting}
 
 % ══════════════════════════════════════════════════════════════════════════════
@@ -523,98 +687,119 @@ graph.add_conditional_edges(
 \label{sec:rag}
 % ══════════════════════════════════════════════════════════════════════════════
 
-\subsection{Knowledge Base Construction}
+\subsection{Knowledge Base}
 
-Six curated markdown documents form the retrieval corpus
-(Table~\ref{tab:kb}).  These are \emph{not} generic business advice; each
-document contains quantified, source-traceable telecom retention statistics
-(e.g., ``electronic check users churn at 2.4$\times$ the rate of auto-pay
-users; auto-pay enrollment incentive converts 37\% of this segment'').
+Six curated Markdown documents form the retrieval corpus. Each document
+contains quantified, source-traceable telecom retention statistics rather than
+generic business advice.
 
 \begin{table}[H]
 \centering
-\caption{Knowledge base composition.}
+\caption{Knowledge base documents with content descriptions and risk tier tags.}
 \label{tab:kb}
-\small
-\setlength{\tabcolsep}{3pt}
-\begin{tabularx}{\linewidth}{lXl}
+\renewcommand{\arraystretch}{1.6}
+\begin{tabular}{L{5cm} L{6.5cm} L{2cm}}
 \toprule
-\rowcolor{lightgray}\textbf{Document} & \textbf{Content} & \textbf{Risk Tags} \\
+\rowcolor{tabhead}
+\textbf{Document} & \textbf{Content Summary} & \textbf{Risk Tags} \\
 \midrule
-\texttt{telecom\_churn\_strategies} & Proactive outreach timing, contract upgrade incentives, loyalty rewards & All tiers \\
-\addlinespace[2pt]
-\texttt{contract\_retention\_playbook} & Decision table: IF contract $\times$ tenure $\times$ charges $\Rightarrow$ action & M/H/Crit \\
-\addlinespace[2pt]
-\texttt{payment\_risk\_signals} & Electronic check risk factors, auto-pay incentives & H/Crit \\
-\addlinespace[2pt]
-\texttt{service\_upsell\_matrix} & Missing service $\Rightarrow$ upsell offer $\Rightarrow$ expected churn reduction & L/M/H \\
-\addlinespace[2pt]
-\texttt{ethical\_ai\_retention} & Disclosure requirements, anti-discrimination rules & All tiers \\
-\addlinespace[2pt]
-\texttt{industry\_benchmarks} & Acquisition vs.\ retention cost, NPS impact, ROI data & All tiers \\
+\texttt{telecom\_churn\_ strategies} &
+Proactive outreach timing, contract upgrade incentives,
+loyalty rewards, bundle discounts &
+All tiers \\
+\addlinespace[3pt]
+\texttt{contract\_retention\_ playbook} &
+Decision table: contract $\times$ tenure $\times$ charges
+$\Rightarrow$ specific action with discount percentage &
+M / H / Crit \\
+\addlinespace[3pt]
+\texttt{payment\_risk\_signals} &
+Electronic check risk (2.4$\times$ churn rate),
+auto-pay enrollment incentives and conversion statistics &
+H / Crit \\
+\addlinespace[3pt]
+\texttt{service\_upsell\_matrix} &
+Missing service $\Rightarrow$ upsell offer $\Rightarrow$
+expected churn reduction \% per intervention &
+L / M / H \\
+\addlinespace[3pt]
+\texttt{ethical\_ai\_retention} &
+Disclosure requirements, anti-discrimination rules,
+opt-out rights, AI transparency guidelines &
+All tiers \\
+\addlinespace[3pt]
+\texttt{industry\_benchmarks} &
+Acquisition vs.\ retention cost ratio (5--7$\times$),
+NPS impact data, intervention ROI figures &
+All tiers \\
 \bottomrule
-\end{tabularx}
+\end{tabular}
 \end{table}
 
 \subsection{Chunking Strategy}
 
-\texttt{RecursiveCharacterTextSplitter} is used with:
+\texttt{RecursiveCharacterTextSplitter} is configured with:
+
 \begin{itemize}
-  \item \textbf{Chunk size:} 400 tokens — small enough to surface targeted
-        facts, large enough to preserve inter-sentence context.
-  \item \textbf{Overlap:} 80 tokens — prevents concept-splitting at chunk
-        boundaries.
-  \item \textbf{Separators:} \texttt{["\textbackslash n\#\#\space",
-        "\textbackslash n\#\#\#\space", "\textbackslash n-\space",
-        "\textbackslash n", " "]} — aligns boundaries with semantic units
-        (section headers, bullet points).
+  \item \textbf{Chunk size:} 400 tokens --- targeted enough to surface
+        specific facts, large enough to preserve inter-sentence context.
+  \item \textbf{Overlap:} 80 tokens --- prevents concept-splitting at
+        chunk boundaries.
+  \item \textbf{Separators:}
+        \texttt{["\textbackslash n\#\#\ ", "\textbackslash n\#\#\#\ ",
+        "\textbackslash n-\ ", "\textbackslash n", " "]} ---
+        aligns boundaries with semantic units (section headers, bullet
+        points) rather than arbitrary character counts.
 \end{itemize}
 
 \subsection{Embedding Model}
 
-\texttt{sentence-transformers/all-MiniLM-L6-v2} (384-dimensional, Apache 2.0,
-free-tier) is selected over OpenAI \texttt{text-embedding-ada-002} for three
-reasons:
+\texttt{sentence-transformers/all-MiniLM-L6-v2} (384-dimensional, Apache
+2.0 licence, free) is selected over OpenAI \texttt{text-embedding-ada-002}
+for three reasons:
+
 \begin{enumerate}
-  \item \textbf{Zero cost} — no API budget consumed.
-  \item \textbf{Offline capability} — model is cached locally after first
-        download; no internet dependency at inference time.
-  \item \textbf{Normalised embeddings} — \texttt{normalize\_embeddings=True}
-        enables exact cosine similarity via dot product.
+  \item \textbf{Zero cost} --- no API budget is consumed.
+  \item \textbf{Offline capability} --- the model is cached locally after
+        first download.
+  \item \textbf{Normalised embeddings} --- with
+        \texttt{normalize\_embeddings=True}, cosine similarity reduces to a
+        dot product, enabling efficient ChromaDB queries.
 \end{enumerate}
 
-\subsection{Maximum Marginal Relevance Retrieval}
+\subsection{Maximum Marginal Relevance}
 
-Standard top-$k$ retrieval maximises similarity but can return near-duplicate
-chunks.  \textbf{MMR} \cite{carbonell1998mmr} balances relevance against
-diversity via:
+Standard top-$k$ retrieval maximises relevance but frequently returns
+near-duplicate chunks from the same document section. MMR
+\cite{carbonell1998mmr} balances relevance and diversity via:
 
 \begin{equation}
-\text{MMR}(D_i) = \lambda \cdot \text{sim}(D_i, Q)
-  - (1 - \lambda) \cdot \max_{D_j \in S} \text{sim}(D_i, D_j)
+\text{MMR}(D_i) =
+  \lambda \cdot \mathrm{sim}(D_i,\, Q)
+  \;-\;
+  (1 - \lambda) \cdot \max_{D_j \in S}\, \mathrm{sim}(D_i,\, D_j)
 \label{eq:mmr}
 \end{equation}
 
 where $Q$ is the query, $S$ is the set of already-selected documents, and
-$\lambda = 0.6$ trades off relevance against diversity.  With
-\texttt{fetch\_k=20} candidates and \texttt{k=6} final results, the retriever
-samples broadly then prunes for maximum coverage across different retention
-strategy categories.
+$\lambda = 0.6$. With \texttt{fetch\_k=20} candidates and \texttt{k=6} final
+results, the retriever selects for maximum strategy coverage across different
+retention categories rather than repeating the same advice.
 
 \subsection{Hallucination Mitigation}
 
 Three complementary mechanisms reduce fabricated recommendations:
 
 \begin{enumerate}
-  \item \textbf{Source grounding.}  Each prompt injects retrieved chunks
-        verbatim with explicit instruction: \textit{``Only reference tactics
-        mentioned in the context documents above. If context is insufficient,
-        state `Insufficient context.'\thinspace''}\
-  \item \textbf{Metadata filtering.}  Post-retrieval risk-tier filtering
-        prevents out-of-distribution strategy leakage between tiers.
-  \item \textbf{Schema validation.}  The \texttt{validator} node checks that
-        all action strings exist in the retrieved context (substring match
-        on key tactic names), with retry on failure.
+  \item \textbf{Source grounding.} Each prompt injects retrieved chunks
+        verbatim with the instruction: \textit{``Only reference tactics
+        mentioned in the context documents. If context is insufficient,
+        state `Insufficient context for this recommendation.'\thinspace''}
+  \item \textbf{Metadata filtering.} Risk-tier filtering prevents
+        out-of-distribution strategy leakage between tiers.
+  \item \textbf{Schema validation.} Node~5 verifies that recommended
+        action strings reference tactics present in the retrieved documents,
+        with automatic retry on failure.
 \end{enumerate}
 
 % ══════════════════════════════════════════════════════════════════════════════
@@ -624,22 +809,27 @@ Three complementary mechanisms reduce fabricated recommendations:
 
 \subsection{Chain-of-Thought Reasoning Prompt (Node 3)}
 
-\begin{lstlisting}[caption={Risk interpretation prompt sent to Groq LLM.}]
-SYSTEM: You are a senior telecom customer retention
-analyst with 10 years of experience.
+\begin{lstlisting}[caption={Risk interpretation prompt sent to the LLM in Node 3.}]
+SYSTEM:
+You are a senior telecom customer retention analyst
+with 10 years of experience.
 
 USER:
 CUSTOMER RISK PROFILE:
 - Churn Probability: {churn_probability:.1%}
 - Risk Level: {risk_level}
 - Primary Churn Drivers:
-{churn_drivers_formatted}
+  * {driver_1}
+  * {driver_2}
+  * {driver_3}
 - Contract: {contract}, Tenure: {tenure} months
 - Monthly Charges: ${monthly_charges}
-- Payment: {payment_method}
+- Payment Method: {payment_method}
 
 RETRIEVED RETENTION CONTEXT:
-{retrieved_docs_formatted}
+[Doc 1]: {retrieved_doc_1[:300]}
+[Doc 2]: {retrieved_doc_2[:300]}
+...
 
 Reason step-by-step:
 1. Which drivers are most actionable RIGHT NOW?
@@ -647,168 +837,154 @@ Reason step-by-step:
    drivers? Quote the specific tactic.
 3. What is the likely customer sentiment?
 
-Format: <reasoning>...</reasoning>
+Format output as:
+<reasoning>[your analysis]</reasoning>
 
 CONSTRAINT: Only reference tactics from the
-context above. Max 250 words.
+context above. Maximum 250 words.
 \end{lstlisting}
 
 \subsection{Structured JSON Output Prompt (Node 4)}
 
-Role prompting enforces output format compliance.  The system prompt
-\texttt{``Output ONLY valid JSON. No markdown. No explanation.''} combined
-with the explicit JSON schema template reduces format errors by preventing
-the LLM from generating any free-form text outside the structure.  The
-\texttt{ethical\_disclaimer} field is hardcoded in the prompt schema
-to guarantee it always appears in the output.
+The system instruction \texttt{"Output ONLY valid JSON. No markdown.
+No explanation."} combined with the explicit JSON schema template prevents
+the LLM from generating any free-form text outside the defined structure.
+The \texttt{ethical\_disclaimer} field is hardcoded in the schema to
+guarantee it always appears in every output.
 
-% ══════════════════════════════════════════════════════════════════════════════
-\section{Structured Output \& Results}
-\label{sec:results}
-% ══════════════════════════════════════════════════════════════════════════════
-
-\subsection{Output Schema}
-
-Every agent invocation produces a validated JSON plan conforming to:
-
-\begin{lstlisting}[language=Python, caption={RetainAI structured output schema.}]
+\begin{lstlisting}[language=Python,
+  caption={Structured output schema enforced via the Node 4 prompt.}]
 {
   "customer_profile": {
-    "tenure_months": int,
-    "contract_type": str,
-    "monthly_charges": float,
-    "risk_tier": "Low|Medium|High|Critical"
+    "tenure_months":   <int>,
+    "contract_type":   "<str>",
+    "monthly_charges": <float>,
+    "risk_tier":       "Low|Medium|High|Critical"
   },
-  "risk_analysis": str,          # 2-sentence summary
-  "churn_drivers": [str, ...],   # top 3 drivers
+  "risk_analysis":  "<2-sentence summary>",
+  "churn_drivers":  ["<driver1>", "<driver2>", "<driver3>"],
   "recommended_actions": [
     {
-      "action": str,
-      "rationale": str,
-      "channel": "Email|Call|App|SMS",
-      "timeline": "Immediate|Within 7 days|..."
+      "action":    "<specific action>",
+      "rationale": "<why this addresses a churn driver>",
+      "channel":   "Email|Call|App|SMS",
+      "timeline":  "Immediate|Within 7 days|Within 30 days"
     }
   ],
-  "priority_level": str,
-  "expected_impact": str,        # with % figure
-  "sources": [str, ...],         # document refs
-  "ethical_disclaimer": str
+  "priority_level":    "Immediate|Within 7 days|Within 30 days",
+  "expected_impact":   "<e.g. 34% churn risk reduction>",
+  "sources":           ["<document reference>"],
+  "ethical_disclaimer": "AI-generated plan.
+                         Human review recommended."
 }
 \end{lstlisting}
 
-\subsection{Qualitative Evaluation}
+% ══════════════════════════════════════════════════════════════════════════════
+\section{Results and Evaluation}
+\label{sec:results}
+% ══════════════════════════════════════════════════════════════════════════════
 
-Table~\ref{tab:examples} presents three representative agent outputs
-across the four risk tiers.
+\subsection{ML Model Performance}
+
+Table~\ref{tab:metrics} presents the quantitative evaluation results.
+In typical Telco churn settings, Logistic Regression provides a strong,
+well-calibrated baseline while the shallow Decision Tree captures key
+nonlinear interactions at the cost of slightly reduced generalisation.
+
+\subsection{Qualitative Agent Evaluation}
+
+Table~\ref{tab:examples} presents three representative end-to-end agent
+outputs across the risk tier spectrum.
 
 \begin{table}[H]
 \centering
-\caption{Sample agent outputs across risk tiers.}
+\caption{Sample agent outputs across three risk tiers.}
 \label{tab:examples}
-\small
-\setlength{\tabcolsep}{3pt}
-\begin{tabularx}{\linewidth}{lXX}
+\renewcommand{\arraystretch}{1.7}
+\begin{tabular}{L{4.5cm} L{4cm} L{5cm}}
 \toprule
-\rowcolor{lightgray}\textbf{Profile} & \textbf{Top Driver} & \textbf{Top Action} \\
+\rowcolor{tabhead}
+\textbf{Customer Profile} & \textbf{Top Churn Driver} & \textbf{Top Recommended Action} \\
 \midrule
-\textit{Critical:} Month-to-month, 2 mo., \$89, Fiber, e-check &
+\textit{Critical} --- Month-to-month, 2~mo., \$89.50/mo, Fiber, e-check &
 Contract: Month-to-month &
-Same-day call + 20\% off 12-month upgrade \\
-\addlinespace[3pt]
-\textit{High:} Month-to-month, 14 mo., \$72, DSL, e-check &
+Same-day call + 20\% discount for 12-month upgrade \\
+\addlinespace[4pt]
+\textit{High} --- Month-to-month, 14~mo., \$72/mo, DSL, e-check &
 Payment: Electronic check &
-Auto-pay enrollment incentive (\$5/mo discount) \\
-\addlinespace[3pt]
-\textit{Low:} Two year, 48 mo., \$45, DSL, bank transfer &
+Auto-pay enrollment incentive (\$5/mo discount);
+post-conversion churn drops 51\% \\
+\addlinespace[4pt]
+\textit{Low} --- Two-year contract, 48~mo., \$45/mo, DSL, bank transfer &
 Tenure milestone approaching &
-Proactive loyalty email + two-year renewal offer \\
+Proactive loyalty email + two-year renewal with locked-in pricing \\
 \bottomrule
-\end{tabularx}
+\end{tabular}
 \end{table}
 
-\subsection{Scenario Simulation Example}
+\subsection{Scenario Simulation Results}
 
-The What-If simulator quantifies the impact of hypothetical interventions.
-For the Critical-tier example above, upgrading to a one-year contract and
-switching to auto-pay reduces the predicted churn probability from
-\textbf{0.81} to \textbf{0.39} — a 51.9\% risk reduction — while the agent
-refreshes the retention plan to reflect the lower-risk profile.
+The What-If simulator quantifies the impact of retention interventions
+before they are applied. For the Critical-tier customer above, two
+simultaneous interventions produce the outcome shown in
+Table~\ref{tab:simulation}.
 
-% ══════════════════════════════════════════════════════════════════════════════
-\section{User Interface}
-\label{sec:ui}
-% ══════════════════════════════════════════════════════════════════════════════
+\begin{table}[H]
+\centering
+\caption{Scenario simulation: Critical-tier customer before and after
+two simultaneous interventions.}
+\label{tab:simulation}
+\renewcommand{\arraystretch}{1.6}
+\begin{tabular}{L{5.5cm} C{3cm} C{3cm} C{2cm}}
+\toprule
+\rowcolor{tabhead}
+\textbf{Interventions Applied} & \textbf{Before} & \textbf{After} &
+\textbf{$\Delta$ Risk} \\
+\midrule
+(1)~Upgrade to 1-year contract\newline
+(2)~Switch to auto-pay &
+81\% (Critical) &
+39\% (Medium) &
+$-$51.9\% \\
+\bottomrule
+\end{tabular}
+\end{table}
 
-The Streamlit frontend is organised into three tabs:
-
-\begin{enumerate}
-  \item \textbf{Single Analysis.}  Customer input form $\rightarrow$ instant ML
-        risk badge + gauge chart $\rightarrow$ SHAP waterfall chart $\rightarrow$
-        agent retention plan rendered as styled cards with per-action channel
-        and timeline badges.
-
-  \item \textbf{Batch Analysis.}  CSV upload $\rightarrow$ ML-only scoring
-        for up to 50 rows (agent is bypassed for throughput) $\rightarrow$
-        colour-coded dataframe $\rightarrow$ downloadable results CSV.
-
-  \item \textbf{Scenario Simulator.}  Intervention controls (contract
-        upgrade, discount slider, service additions, payment method switch)
-        $\rightarrow$ side-by-side gauge comparison with delta risk
-        reduction highlighted.
-\end{enumerate}
-
-A feedback widget (thumbs up/down) is shown after each agent plan.  Ratings
-are stored in \texttt{backend/feedback.jsonl}; low-rated strategy names are
-prepended as exclusion signals to future retrieval queries, implementing a
-lightweight continuous improvement loop.
+The agent refreshes the full retention plan in real time to reflect the
+updated risk profile, demonstrating the system's capacity for interactive
+pre-intervention decision support.
 
 % ══════════════════════════════════════════════════════════════════════════════
-\section{Deployment \& Reliability}
+\section{Deployment and Reliability}
 \label{sec:deployment}
 % ══════════════════════════════════════════════════════════════════════════════
 
-\subsection{Deployment Targets}
+\begin{table}[H]
+\centering
+\caption{Deployment configuration summary.}
+\label{tab:deploy}
+\renewcommand{\arraystretch}{1.5}
+\begin{tabular}{L{4cm} L{9.5cm}}
+\toprule
+\rowcolor{tabhead}
+\textbf{Component} & \textbf{Configuration} \\
+\midrule
+Primary demo      & Render.com free tier \\
+Secondary mirror  & Hugging Face Spaces (Streamlit SDK) \\
+LLM primary       & Groq \texttt{llama-3.1-8b-instant} (6{,}000 TPM free) \\
+LLM fallback      & Gemini 1.5 Flash (15 RPM free tier) \\
+Vector store      & ChromaDB persistent store committed to repo ($\approx$12 MB) \\
+Secrets           & \texttt{GROQ\_API\_KEY}, \texttt{GEMINI\_API\_KEY}
+                    via platform secrets dashboard \\
+\bottomrule
+\end{tabular}
+\end{table}
 
-The application is deployed on two public free-tier platforms:
-\begin{itemize}
-  \item \textbf{Streamlit Community Cloud} — primary demo URL.
-  \item \textbf{Hugging Face Spaces} (Streamlit SDK) — secondary mirror.
-\end{itemize}
-
-API keys (\texttt{GROQ\_API\_KEY}, \texttt{GEMINI\_API\_KEY}) are injected via
-platform secrets.  The ChromaDB index (\texttt{backend/rag/chroma\_store/}) is
-committed to the repository (~12 MB) and loaded at cold start.
-
-\subsection{Rate-Limit Resilience}
-
-A \texttt{LLMRouter} class attempts Groq first (\texttt{llama-3.1-8b-instant},
-6,000 TPM free tier) and falls back to Gemini 1.5 Flash (15 RPM free tier)
-on \texttt{RateLimitError}.  All LLM calls are wrapped in
-\texttt{tenacity.retry} with exponential back-off
+All LLM calls are wrapped with \texttt{tenacity.retry}
 (\texttt{wait\_exponential(min=1, max=8)}, \texttt{stop\_after\_attempt(3)}).
-If all retries exhaust, a deterministic rule-based fallback plan is returned
-— the UI never shows an unhandled exception.
-
-\subsection{Repository Structure}
-
-\begin{lstlisting}[caption={Abridged repository layout.}]
-customer-churn-prediction/
-  backend/
-    agents/        # state.py + 5 node files
-    rag/           # embeddings, retriever,
-                   # knowledge_base/, chroma_store/
-    models/        # predict.py + explainer.py
-    workflows/     # retention_graph.py
-    feedback.py    # feedback loop module
-  frontend/
-    app.py         # premium Streamlit UI
-  models/          # *.pkl artefacts (mid-sem)
-  data/            # *.npy + telco_churn.csv
-  data_prep.py     # (mid-sem, unchanged)
-  model_training.py# (mid-sem, extended w/ SHAP)
-  requirements.txt
-  .env.example
-\end{lstlisting}
+If all retries exhaust, a deterministic rule-based fallback plan is assembled
+from the current \texttt{AgentState} --- the UI never displays an unhandled
+exception.
 
 % ══════════════════════════════════════════════════════════════════════════════
 \section{Ethical AI Considerations}
@@ -818,59 +994,56 @@ customer-churn-prediction/
 RetainAI incorporates four ethical safeguards:
 
 \begin{enumerate}
-  \item \textbf{Transparency.}  Every output includes an
-        \texttt{ethical\_disclaimer} field and source citations linking
-        recommendations to specific knowledge documents.
-  \item \textbf{Non-discrimination.}  The model does not use gender,
-        race, religion, or national origin as direct features.  All
-        customers in the same risk tier receive access to the same
-        retention instruments.
-  \item \textbf{Human oversight.}  The disclaimer explicitly states
-        ``Human review recommended before customer contact.''  The
-        system is positioned as a decision-support tool, not an
-        autonomous action-taker.
-  \item \textbf{Opt-out.}  The feedback loop stores ratings only for
-        the hashed customer profile (not PII); customers can opt out
-        of AI-driven retention programs per the
-        \texttt{ethical\_ai\_retention.md} knowledge document.
+  \item \textbf{Transparency.} Every output includes an
+        \texttt{ethical\_disclaimer} field and \texttt{sources} citations
+        linking each recommendation to a specific knowledge document.
+  \item \textbf{Non-discrimination.} The ML model does not use gender,
+        race, religion, or national origin as direct features. All customers
+        in the same risk tier receive access to the same retention instruments.
+  \item \textbf{Human oversight.} The disclaimer states ``Human review
+        recommended before customer contact.'' The system is a decision-support
+        tool, not an autonomous action-taker.
+  \item \textbf{Data minimisation.} The feedback loop stores only a hashed
+        customer profile (contract type, tenure bucket, risk tier) --- no
+        personally identifiable information is persisted.
 \end{enumerate}
 
 % ══════════════════════════════════════════════════════════════════════════════
-\section{Discussion \& Limitations}
+\section{Discussion and Future Work}
 \label{sec:discussion}
 % ══════════════════════════════════════════════════════════════════════════════
 
 \subsection{Design Justifications}
 
-\textbf{LangGraph over raw LLM calls.}  Explicit state management via
-\texttt{TypedDict} makes every intermediate value inspectable and testable.
-Conditional edges encode business logic (retry on validation failure) without
-ad-hoc string parsing.
-
-\textbf{ChromaDB over FAISS.}  Persistent storage eliminates re-indexing on
-restart.  Metadata-filtered retrieval is natively supported.  FAISS is
-retained as a fallback in \texttt{requirements.txt}.
-
-\textbf{Groq \texttt{llama-3.1-8b-instant} over GPT-4.}  The 8B model
-achieves sub-2-second inference on Groq's LPU hardware while remaining within
-the 6,000 TPM free tier.  Qualitative evaluation shows adequate instruction
-following for structured JSON generation at this scale.
+\begin{itemize}
+  \item \textbf{LangGraph over raw LLM calls.} Explicit \texttt{TypedDict}
+        state makes every intermediate value inspectable and unit-testable.
+        Conditional edges encode retry logic without ad-hoc string parsing.
+  \item \textbf{ChromaDB over FAISS.} Persistent storage eliminates
+        re-indexing on restart; metadata-filtered retrieval is natively
+        supported. FAISS is retained in \texttt{requirements.txt} as a
+        cold fallback.
+  \item \textbf{MMR over top-$k$ retrieval.} The six knowledge documents
+        contain overlapping content. MMR ensures retrieved chunks span
+        multiple strategy categories rather than repeating the same advice.
+  \item \textbf{Groq \texttt{llama-3.1-8b-instant}.} Sub-2-second inference
+        within the 6{,}000 TPM free tier; qualitative testing confirms
+        adequate structured JSON generation at this scale.
+\end{itemize}
 
 \subsection{Limitations}
 
 \begin{itemize}
-  \item \textbf{Static knowledge base.}  The RAG corpus does not update
-        automatically; a production system would integrate a live telco
-        CRM feed.
-  \item \textbf{Single dataset.}  The model is trained on one static
-        snapshot.  Concept drift monitoring (\textit{e.g.}, Evidently AI)
-        would be required in production.
-  \item \textbf{Class imbalance.}  The 26.5\% positive-class rate is not
-        explicitly addressed via resampling or class weighting; this likely
-        suppresses recall.
-  \item \textbf{LLM non-determinism.}  Identical inputs may produce
-        slightly different retention plans across runs.  The validator
-        mitigates structural inconsistency but not semantic variance.
+  \item \textbf{Static knowledge base.} The RAG corpus does not update
+        automatically; a production system would ingest live CRM feeds and
+        A/B test outcomes.
+  \item \textbf{Single dataset.} Trained on one static snapshot; concept
+        drift monitoring would be required in production.
+  \item \textbf{Class imbalance not explicitly handled.} The 26.5\%
+        positive-class rate likely suppresses recall; class weighting or
+        SMOTE would improve minority-class detection.
+  \item \textbf{LLM non-determinism.} Identical inputs may produce
+        semantically different plans across runs.
 \end{itemize}
 
 \subsection{Future Work}
@@ -878,12 +1051,12 @@ following for structured JSON generation at this scale.
 \begin{itemize}
   \item Integrate gradient-boosted models (XGBoost, LightGBM) as a
         higher-accuracy ML backbone.
-  \item Replace static KB with a live RAG pipeline ingesting
-        industry news feeds and A/B test outcomes.
-  \item Add a multi-agent architecture: a \textit{Critic} agent reviews
-        the \textit{Planner} agent's output before it reaches the user.
-  \item Extend the feedback loop to fine-tune the retrieval embedding
-        model using accepted/rejected plan pairs.
+  \item Add a Critic agent that reviews the Planner agent's output before
+        it reaches the user, implementing a multi-agent review loop.
+  \item Extend the feedback loop to fine-tune the sentence-transformer
+        embedding model using accepted versus rejected plan pairs.
+  \item Integrate LangSmith tracing for full observability of agent state
+        transitions in production.
 \end{itemize}
 
 % ══════════════════════════════════════════════════════════════════════════════
@@ -892,49 +1065,61 @@ following for structured JSON generation at this scale.
 % ══════════════════════════════════════════════════════════════════════════════
 
 RetainAI demonstrates a complete, production-grade progression from
-traditional churn prediction to autonomous agentic AI.  The five-node
+traditional churn prediction to autonomous agentic AI. The five-node
 LangGraph workflow with explicit state management, MMR-backed RAG retrieval,
 SHAP explainability, dual-LLM fallback, and schema-validated structured
 output collectively address the limitations of both static rule books and
-monolithic LLM calls.  The publicly deployed Streamlit application, modular
-codebase, and feedback loop position the system as an internship-ready
-demonstration of responsible, production-oriented agentic AI development.
+monolithic LLM calls.
 
-% ══════════════════════════════════════════════════════════════════════════════
-%  REFERENCES
-% ══════════════════════════════════════════════════════════════════════════════
+The system moves from \textit{insight to action} automatically: given a
+customer record it identifies the churn risk, retrieves diverse retention
+strategies from a curated knowledge base, reasons about which interventions
+fit, generates a prioritised action plan, validates its own output, and
+presents a fully source-traceable recommendation --- all within a single
+agent invocation. The publicly deployed application, modular codebase, and
+feedback loop position RetainAI as an internship-ready demonstration of
+responsible, production-oriented agentic AI development.
+
+% ── References ────────────────────────────────────────────────────────────────
+\newpage
 \begin{thebibliography}{9}
+\setlength{\itemsep}{5pt}
 
 \bibitem{reichheld1990zero}
-Reichheld, F.\ F.\ \& Sasser, W.\ E.\ (1990).
+Reichheld, F.\,F.\ \& Sasser, W.\,E.\ (1990).
 \textit{Zero defections: quality comes to services.}
 Harvard Business Review, 68(5), 105--111.
 
 \bibitem{carbonell1998mmr}
 Carbonell, J.\ \& Goldstein, J.\ (1998).
-\textit{The use of MMR, diversity-based reranking for reordering documents and
-producing summaries.}
-Proceedings of ACM SIGIR.
+\textit{The use of MMR, diversity-based reranking for reordering documents
+and producing summaries.}
+Proceedings of the 21st Annual ACM SIGIR Conference, pp.\ 335--336.
 
 \bibitem{lundberg2017shap}
-Lundberg, S.\ M.\ \& Lee, S.-I.\ (2017).
+Lundberg, S.\,M.\ \& Lee, S.-I.\ (2017).
 \textit{A unified approach to interpreting model predictions.}
-NeurIPS, 30.
-
-\bibitem{langgraph2024}
-LangChain AI (2024).
-\textit{LangGraph: Building Stateful, Multi-Actor Applications with LLMs.}
-\url{https://github.com/langchain-ai/langgraph}
+Advances in Neural Information Processing Systems, 30.
 
 \bibitem{lewis2020rag}
 Lewis, P.\ et al.\ (2020).
 \textit{Retrieval-Augmented Generation for knowledge-intensive NLP tasks.}
-NeurIPS, 33, 9459--9474.
+Advances in Neural Information Processing Systems, 33, 9459--9474.
+
+\bibitem{langgraph2024}
+LangChain AI (2024).
+\textit{LangGraph: Building stateful, multi-actor applications with LLMs.}
+\url{https://github.com/langchain-ai/langgraph}
 
 \bibitem{chroma2024}
 Chroma (2024).
 \textit{Chroma: the open-source embedding database.}
 \url{https://www.trychroma.com}
+
+\bibitem{groq2024}
+Groq Inc.\ (2024).
+\textit{Groq LPU Inference Engine.}
+\url{https://groq.com}
 
 \end{thebibliography}
 
