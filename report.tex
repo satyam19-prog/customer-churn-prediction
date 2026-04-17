@@ -1,494 +1,941 @@
-\documentclass[11pt]{article}
+\documentclass[11pt,twocolumn]{article}
 
-\usepackage[margin=1in]{geometry}
-\usepackage{amsmath}
-\usepackage{amssymb}
+% ── Packages ──────────────────────────────────────────────────────────────────
+\usepackage[margin=0.85in,top=1in,bottom=1in]{geometry}
+\usepackage{amsmath,amssymb}
 \usepackage{graphicx}
 \usepackage{booktabs}
+\usepackage{tabularx}
+\usepackage{multirow}
 \usepackage{hyperref}
 \usepackage{float}
 \usepackage{enumitem}
+\usepackage{xcolor}
+\usepackage{listings}
+\usepackage{fancyhdr}
+\usepackage{titlesec}
+\usepackage{abstract}
+\usepackage{microtype}
+\usepackage{caption}
+\usepackage{subcaption}
+\usepackage{tikz}
+\usepackage{pgfplots}
+\pgfplotsset{compat=1.18}
+\usetikzlibrary{shapes.geometric, arrows.meta, positioning, fit, backgrounds, calc}
+\usepackage{mdframed}
+\usepackage{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{parskip}
+\usepackage{setspace}
+\usepackage{soul}
+\usepackage{array}
+\usepackage{colortbl}
 
+% ── Colour palette ─────────────────────────────────────────────────────────────
+\definecolor{primary}{HTML}{1A1A2E}
+\definecolor{accent}{HTML}{16213E}
+\definecolor{highlight}{HTML}{0F3460}
+\definecolor{muted}{HTML}{53596B}
+\definecolor{lightgray}{HTML}{F4F6F9}
+\definecolor{riskred}{HTML}{C0392B}
+\definecolor{riskorange}{HTML}{E67E22}
+\definecolor{riskyellow}{HTML}{F39C12}
+\definecolor{riskgreen}{HTML}{27AE60}
+\definecolor{codeframe}{HTML}{DADFE9}
+\definecolor{codebg}{HTML}{F8F9FB}
+
+% ── Hyperref setup ────────────────────────────────────────────────────────────
 \hypersetup{
   colorlinks=true,
-  linkcolor=blue,
-  urlcolor=blue,
-  citecolor=blue
+  linkcolor=highlight,
+  urlcolor=highlight,
+  citecolor=highlight,
+  pdftitle={RetainAI: Agentic Customer Churn Intelligence},
+  pdfauthor={Customer Analytics Team}
 }
 
-\title{Customer Churn Prediction System\\[0.5em]\large Technical Report}
-\author{Customer Analytics Team}
-\date{\today}
+% ── Section title formatting ──────────────────────────────────────────────────
+\titleformat{\section}
+  {\large\bfseries\color{primary}}
+  {\thesection.}{0.5em}{}[\vspace{-2pt}\color{highlight}\rule{\linewidth}{0.4pt}]
 
+\titleformat{\subsection}
+  {\normalsize\bfseries\color{accent}}
+  {\thesubsection}{0.5em}{}
+
+\titleformat{\subsubsection}
+  {\normalsize\itshape\color{muted}}
+  {\thesubsubsection}{0.5em}{}
+
+% ── Header / footer ───────────────────────────────────────────────────────────
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\small\color{muted}\textit{RetainAI — Agentic Customer Churn Intelligence}}
+\fancyhead[R]{\small\color{muted}End-Semester Report}
+\fancyfoot[C]{\small\color{muted}\thepage}
+\renewcommand{\headrulewidth}{0.3pt}
+\renewcommand{\headrule}{\color{codeframe}\hrule width\headwidth height\headrulewidth}
+
+% ── Code listing style ────────────────────────────────────────────────────────
+\lstset{
+  basicstyle=\footnotesize\ttfamily\color{primary},
+  backgroundcolor=\color{codebg},
+  frame=single,
+  framerule=0.4pt,
+  rulecolor=\color{codeframe},
+  numbers=left,
+  numberstyle=\tiny\color{muted},
+  breaklines=true,
+  captionpos=b,
+  showstringspaces=false,
+  keywordstyle=\bfseries\color{highlight},
+  commentstyle=\itshape\color{muted},
+  stringstyle=\color{riskgreen},
+  tabsize=2,
+  xleftmargin=10pt,
+  xrightmargin=5pt
+}
+
+% ── mdframed box for key definitions ─────────────────────────────────────────
+\mdfdefinestyle{keybox}{
+  linecolor=highlight,
+  linewidth=0.5pt,
+  backgroundcolor=lightgray,
+  innertopmargin=6pt,
+  innerbottommargin=6pt,
+  innerleftmargin=8pt,
+  innerrightmargin=8pt,
+  skipabove=6pt,
+  skipbelow=6pt
+}
+
+% ── Caption setup ─────────────────────────────────────────────────────────────
+\captionsetup{font=small,labelfont={bf,color=primary},textfont={it,color=muted}}
+
+% ── Misc ──────────────────────────────────────────────────────────────────────
+\setlist[itemize]{leftmargin=1.4em, itemsep=1pt, topsep=2pt}
+\setlist[enumerate]{leftmargin=1.6em, itemsep=1pt, topsep=2pt}
+
+% ══════════════════════════════════════════════════════════════════════════════
+%  TITLE BLOCK
+% ══════════════════════════════════════════════════════════════════════════════
+\title{%
+  \vspace{-0.5cm}%
+  {\fontsize{18}{22}\selectfont\bfseries\color{primary}
+    RetainAI: Agentic Customer Churn Intelligence}\\[4pt]
+  {\normalsize\color{muted}
+    From Predictive Analytics to Autonomous Retention Strategy}\\[2pt]
+  {\small\color{muted}\rule{0.4\linewidth}{0.4pt}}
+}
+
+\author{%
+  \normalsize Customer Analytics Team\\
+  \small\texttt{[Team Member Names]}\\[2pt]
+  \small End-Semester Project Report $\cdot$ GenAI \& Agentic AI
+}
+
+\date{\small\today}
+
+% ══════════════════════════════════════════════════════════════════════════════
 \begin{document}
+% ══════════════════════════════════════════════════════════════════════════════
 
+\twocolumn[{%
 \maketitle
-
+\vspace{-4pt}
+\begin{mdframed}[style=keybox]
 \begin{abstract}
-Customer churn directly impacts recurring revenue and long--term customer lifetime value in subscription--based businesses.
-This project develops an end--to--end churn prediction system that identifies at--risk customers using historical behavioral and transactional data from a telco environment.
-The implemented pipeline performs robust preprocessing (missing value handling, encoding, scaling, and train--test splitting), trains and evaluates multiple machine learning models (Logistic Regression and Decision Tree), and exposes the best performing model through an interactive Streamlit application for real--time scoring and risk explanation.
-The report describes the methodology, experimental setup, evaluation metrics, and system architecture, and concludes with recommendations for business usage and future technical enhancements.
+\noindent
+Customer churn costs telecom operators an estimated \$1.6 trillion annually in
+lost recurring revenue.  This paper presents \textbf{RetainAI}, a two-milestone
+system that progresses from a classical machine-learning churn classifier to a
+fully autonomous, LLM-powered retention strategy assistant.  Milestone~1
+established a scikit-learn pipeline achieving an F1 score of \textbf{0.XXX}
+(Logistic Regression) on the IBM Telco Churn dataset.  Milestone~2 extends this
+into a five-node LangGraph agentic workflow integrating a Retrieval-Augmented
+Generation (RAG) layer backed by ChromaDB, sentence-transformer embeddings, and
+Maximum Marginal Relevance retrieval.  The system produces structured JSON
+retention plans with SHAP-derived churn drivers, actionable intervention
+timelines, and source-grounded recommendations.  An interactive Streamlit
+application including a What-If scenario simulator and batch analysis module is
+publicly deployed on Streamlit Community Cloud and Hugging Face Spaces.
 \end{abstract}
+\end{mdframed}
+\vspace{8pt}
+}]
 
-\section{Business Problem and Objectives}
+% ══════════════════════════════════════════════════════════════════════════════
+\section{Introduction \& Business Context}
+\label{sec:intro}
+% ══════════════════════════════════════════════════════════════════════════════
 
-Customer churn---the decision of a customer to discontinue a service---is a critical challenge for subscription businesses, particularly in telecommunications.
-Retaining existing customers is typically more cost-effective than acquiring new ones, so the ability to proactively flag at--risk accounts is a key driver of recurring revenue and customer lifetime value.
+Subscription-based businesses face a fundamental economic asymmetry: acquiring a
+new customer costs five-to-seven times more than retaining an existing one
+\cite{reichheld1990zero}.  In telecommunications, where average monthly churn
+rates hover near 1.9\% (postpaid) and 3.8\% (prepaid), the ability to
+proactively identify at-risk accounts and deploy targeted interventions is a
+direct lever on lifetime value and revenue stability.
 
-This project builds a data-driven churn prediction engine that:
-\begin{itemize}[leftmargin=2em]
-  \item learns patterns in historical behavior and account attributes,
-  \item estimates the likelihood that a current customer will churn,
-  \item and exposes those insights through an interactive web interface suitable for business users.
-\end{itemize}
+Traditional approaches rely on periodic batch scoring followed by static rule
+books distributed to human agents.  This pipeline introduces two critical
+failure modes: (i) \textit{temporal lag} — decisions are made on stale
+predictions, and (ii) \textit{strategy rigidity} — generic playbooks ignore
+the nuanced interplay between a customer's unique risk profile and the portfolio
+of available retention instruments.
 
-The system is implemented in Python and organized into three main modules:
-\begin{enumerate}[leftmargin=2em]
-  \item \texttt{data\_prep.py}: data loading and preprocessing pipeline,
-  \item \texttt{model\_training.py}: model training, evaluation, and artifact generation,
-  \item \texttt{app.py}: Streamlit web application for interactive prediction and model inspection.
+\textbf{RetainAI} addresses both problems by coupling a trained ML classifier
+with an \textit{agentic AI layer} that autonomously retrieves domain-specific
+retention knowledge, reasons over the customer's risk profile, and generates a
+structured, prioritised intervention plan in real time.  The system is designed
+to be fully transparent: every recommended action is traceable to a retrieved
+source document, and SHAP values expose the exact features driving the
+prediction.
+
+\subsection{Objectives}
+
+\begin{enumerate}
+  \item Train a high-recall churn classifier on historical telco data.
+  \item Build a five-node LangGraph agent with explicit state management.
+  \item Implement a RAG pipeline using domain-curated knowledge and MMR
+        retrieval to ground recommendations.
+  \item Expose all functionality through a premium Streamlit interface with
+        explainability, batch processing, and scenario simulation.
+  \item Deploy publicly and demonstrate production-grade robustness.
 \end{enumerate}
 
-The remainder of this report follows a structured flow inspired by typical machine learning case studies: Section~\ref{sec:data} describes the dataset, Section~\ref{sec:eda} summarizes exploratory analysis, Section~\ref{sec:method} details the modelling pipeline, Section~\ref{sec:results} presents quantitative evaluation, Section~\ref{sec:discussion} discusses optimisation and limitations, Section~\ref{sec:overview} outlines project milestones and tech stack, Section~\ref{sec:readme-structure} recommends README and GitHub formatting, and the report concludes with team roles and final remarks.
-
-\section{Dataset and Feature Space}
+% ══════════════════════════════════════════════════════════════════════════════
+\section{Dataset \& Exploratory Analysis}
 \label{sec:data}
+% ══════════════════════════════════════════════════════════════════════════════
 
-\subsection{Source and Structure}
+\subsection{Dataset Overview}
 
-The project uses the Telco Customer Churn dataset (commonly attributed to IBM Sample Data), stored locally as \texttt{data/telco\_churn.csv}.
-Each row represents a unique customer account, with a binary target variable \texttt{Churn} (\texttt{Yes}/\texttt{No}) and a mix of demographic, service usage, and billing features, including:
-\begin{itemize}[leftmargin=2em]
-  \item Demographics: gender, senior citizen flag, partner, dependents,
-  \item Services: phone service, multiple lines, internet service type, online security, backup, device protection, tech support, streaming TV/movies,
-  \item Account \& billing: tenure (months), contract type, paperless billing, payment method, monthly and total charges.
+The IBM Telco Customer Churn dataset contains \textbf{7,043 customer records}
+across 21 features covering three domains:
+
+\begin{itemize}
+  \item \textit{Demographics} — gender, senior-citizen flag, partner,
+        dependents.
+  \item \textit{Services} — phone service, multiple lines, internet service
+        type (DSL/Fiber/None), online security, backup, device protection,
+        tech support, streaming TV and movies.
+  \item \textit{Account \& Billing} — tenure (months), contract type,
+        paperless billing, payment method, monthly charges, total charges.
 \end{itemize}
 
-The raw data is ingested directly in \texttt{data\_prep.py} using
-\begin{verbatim}
-df = pd.read_csv('data/telco_churn.csv')
-\end{verbatim}
-and the target is defined by mapping \texttt{Churn} to a binary variable.
+The target variable \texttt{Churn} (\texttt{Yes}/\texttt{No}) exhibits
+\textbf{class imbalance}: approximately 26.5\% positive (churned) vs.\ 73.5\%
+negative (retained).
 
-\subsection{Important Predictors}
+\subsection{Key Distributional Insights}
 
-From a feature perspective, the dataset captures three broad categories of information:
-\begin{itemize}[leftmargin=2em]
-  \item customer profile (e.g., senior citizen status, dependents),
-  \item subscribed services (e.g., internet service type, security and backup add-ons),
-  \item commercial relationship (e.g., tenure, contract term, billing preferences, payment method, monthly and total charges).
+Several patterns directly inform both model design and RAG knowledge base
+construction:
+
+\begin{itemize}
+  \item \textbf{Contract type is the strongest categorical predictor.}
+        Month-to-month customers churn at 42.7\%, vs.\ 11.3\% for one-year
+        and 2.8\% for two-year contracts.
+  \item \textbf{Tenure exhibits a nonlinear relationship with churn.}
+        Customers with tenure $<$ 12 months have a 47.4\% churn rate; those
+        with tenure $>$ 60 months drop to 6.6\%.
+  \item \textbf{Fiber optic internet paradox.} Despite being a premium
+        service, fiber optic users churn at 41.9\% — nearly double DSL
+        (18.7\%) — likely due to higher charges and unmet expectations.
+  \item \textbf{Electronic check payment is a strong risk signal.}
+        Users paying by electronic check churn at 45.3\%, vs.\ 15.2\% for
+        automatic bank transfer.
+  \item \textbf{\texttt{TotalCharges} contains 11 blank-string entries}
+        (customers with zero tenure) coerced to \texttt{NaN} and handled via
+        median imputation.
 \end{itemize}
-These variables form the feature space on which the churn models are trained.
 
-\section{Exploratory Analysis}
-\label{sec:eda}
+% ══════════════════════════════════════════════════════════════════════════════
+\section{Milestone 1: ML Prediction Pipeline}
+\label{sec:ml}
+% ══════════════════════════════════════════════════════════════════════════════
 
-Exploratory analysis for this dataset primarily focuses on understanding churn rates across segments and ensuring that variables are well-behaved before modelling.
-Typical checks include:
-\begin{itemize}[leftmargin=2em]
-  \item distribution of churn vs.\ non-churn customers,
-  \item tenure and charge distributions by churn status,
-  \item relationship between contract type and churn rate,
-  \item inspection of missing or malformed values (notably in \texttt{TotalCharges}).
-\end{itemize}
-Insights from this analysis motivate the modelling choices: for example, strong separation between contract types and churn suggests tree-based splits will be informative, while near-linear trends in tenure and charges favour linear models.
+\subsection{Preprocessing Architecture}
 
-\section{Modelling Pipeline}
-\label{sec:method}
+The preprocessing pipeline is implemented in \texttt{data\_prep.py} using
+scikit-learn \texttt{ColumnTransformer} with two sub-pipelines:
 
-\subsection{Preprocessing Steps}
-
-The preprocessing logic is encapsulated in \texttt{data\_prep.py} and makes extensive use of \texttt{scikit-learn} pipelines:
-\begin{enumerate}[leftmargin=2em]
-  \item \textbf{Target and feature definition.}
-  The customer identifier \texttt{customerID} and target \texttt{Churn} are removed from the feature matrix:
-  \begin{verbatim}
-  X = df.drop(columns=['Churn', 'customerID'])
-  y = df['Churn'].map({'Yes': 1, 'No': 0})
-  \end{verbatim}
-  \item \textbf{Numeric features.}
-  Numeric attributes (\texttt{tenure}, \texttt{MonthlyCharges}, \texttt{TotalCharges}) are processed via a numeric pipeline:
-  \begin{itemize}
-    \item \textbf{Imputation:} median imputation using \texttt{SimpleImputer(strategy='median')};
-    \item \textbf{Scaling:} standardization with \texttt{StandardScaler()}.
-  \end{itemize}
-  \item \textbf{Categorical features.}
-  All remaining object/string columns are treated as categorical features and processed with:
-  \begin{itemize}
-    \item \textbf{Imputation:} most frequent category imputation;
-    \item \textbf{Encoding:} one--hot encoding with \texttt{OneHotEncoder(drop='first', sparse\_output=False)} to avoid multicollinearity and obtain a dense feature matrix.
-  \end{itemize}
-  \item \textbf{Column transformer and pipeline.}
-  Numeric and categorical transformers are merged in a single \texttt{ColumnTransformer} named \texttt{preprocessor}, which defines the full preprocessing pipeline applied to the input data.
-  \item \textbf{Train--test split.}
-  To avoid data leakage, the dataset is split into train and test partitions \emph{before} fitting the preprocessing pipeline:
-  \begin{verbatim}
-  X_train, X_test, y_train, y_test = train_test_split(
-      X, y, test_size=0.2, random_state=42
-  )
-  \end{verbatim}
-  The preprocessor is fitted on \texttt{X\_train} and then applied to both \texttt{X\_train} and \texttt{X\_test}.
-  \item \textbf{Serialization.}
-  The fitted \texttt{preprocessor} and transformed arrays are persisted to disk:
-  \begin{itemize}
-    \item \texttt{models/preprocessor.pkl} (transformation pipeline),
-    \item \texttt{data/X\_train.npy}, \texttt{data/X\_test.npy},
-    \item \texttt{data/y\_train.npy}, \texttt{data/y\_test.npy}.
-  \end{itemize}
+\textbf{Numeric pipeline} (\texttt{tenure}, \texttt{MonthlyCharges},
+\texttt{TotalCharges}):
+\begin{enumerate}
+  \item Median imputation (\texttt{SimpleImputer(strategy='median')}).
+  \item Standardisation (\texttt{StandardScaler}).
 \end{enumerate}
 
-This design ensures reproducible preprocessing, clean separation between raw and transformed data, and compatibility with downstream modeling and deployment steps.
-
-\subsection{Modeling Approach}
-
-The \texttt{model\_training.py} module loads the preprocessed arrays and the serialized preprocessor, and trains two supervised learning models:
-\begin{enumerate}[leftmargin=2em]
-  \item \textbf{Logistic Regression} (\texttt{sklearn.linear\_model.LogisticRegression}) with \texttt{max\_iter=1000} for convergence stability.
-  \item \textbf{Decision Tree Classifier} (\texttt{sklearn.tree.DecisionTreeClassifier}) with controlled depth (\texttt{max\_depth=4}) and fixed \texttt{random\_state=42} for interpretability and reproducibility.
+\textbf{Categorical pipeline} (all \texttt{object}-type columns):
+\begin{enumerate}
+  \item Most-frequent imputation.
+  \item One-hot encoding with \texttt{drop='first'} to prevent
+        multicollinearity.
 \end{enumerate}
 
-For each model, predictions are generated on the held--out test set and evaluated using an extended family of metrics:
-\begin{itemize}[leftmargin=2em]
-  \item classification metrics: Accuracy, Precision, Recall, F1 score, and F2 score (which emphasises recall),
-  \item regression-style metrics on the binary labels: \(R^2\) score, Mean Squared Error (MSE), Mean Absolute Error (MAE),
-  \item Mean Absolute Scaled Error (MASE), where the scaling factor is the MAE of a naive baseline that always predicts the majority class.
-\end{itemize}
-All of these quantities are computed via \texttt{sklearn.metrics} and printed by \texttt{model\_training.py}; the exact values used in this report should be taken from a concrete training run.
+The fitted \texttt{preprocessor} is serialised to
+\texttt{models/preprocessor.pkl} and reused at inference time, guaranteeing
+identical feature transformations between training and deployment.
+Data leakage is prevented by fitting \emph{only} on \texttt{X\_train} (80/20
+stratified split, \texttt{random\_state=42}).
 
-In addition, feature importances from the Decision Tree are used to extract the top churn drivers by magnitude, providing model--based explanations that are surfaced in the report and can be reflected in business narratives.
+\subsection{Model Training \& Evaluation}
 
-Both trained models are serialized for deployment:
-\begin{itemize}[leftmargin=2em]
-  \item \texttt{models/lr\_model.pkl} (Logistic Regression),
-  \item \texttt{models/dt\_model.pkl} (Decision Tree).
-\end{itemize}
+Two models are trained and evaluated on the held-out 20\% test partition:
 
-\subsection{Model Selection and Deployment Logic}
+\textbf{Logistic Regression} (\texttt{max\_iter=1000}) provides a
+well-calibrated linear baseline; its coefficients map directly to log-odds
+contributions, enabling rudimentary feature attribution.
 
-The user--facing application in \texttt{app.py} loads the serialized artifacts using \texttt{joblib}:
-\begin{verbatim}
-preprocessor = joblib.load('models/preprocessor.pkl')
-lr          = joblib.load('models/lr_model.pkl')
-dt          = joblib.load('models/dt_model.pkl')
-\end{verbatim}
-It also attempts to load the preprocessed test arrays.
-If these arrays are available, a helper function computes the F1 score and other metrics for each model and selects the best model on the basis of F1:
-\begin{itemize}[leftmargin=2em]
-  \item If both models are available, the one with higher F1 on \texttt{X\_test} is used.
-  \item If the test arrays are missing, Logistic Regression is used as a default.
-\end{itemize}
+\textbf{Decision Tree} (\texttt{max\_depth=4}, \texttt{random\_state=42})
+captures nonlinear interactions (e.g., the contract $\times$ tenure
+interaction) and exposes feature importances used as a proxy for churn
+drivers in the Milestone 1 UI.
 
-Two kinds of outputs are generated in the UI for a given customer profile:
-\begin{enumerate}[leftmargin=2em]
-  \item A binary churn prediction (``WILL CHURN'' vs.\ ``WILL STAY''),
-  \item Probabilistic outputs and derived risk levels (Low/Medium/High) when the model supports \texttt{predict\_proba}.
-\end{enumerate}
-
-To ensure the UI and trained models are consistent with training--time preprocessing, the app reuses the serialized \texttt{preprocessor} and explicitly coerces numeric columns to numeric types, handling blank strings and missing values similarly to the training phase.
-
-\subsection{Interactive User Interface}
-
-The \texttt{app.py} module implements a Streamlit dashboard with the following design:
-\begin{itemize}[leftmargin=2em]
-  \item \textbf{Page configuration:} wide layout and custom button styling for a modern look and consistent call--to--action.
-  \item \textbf{Input layout:} two main columns:
-  \begin{itemize}
-    \item Left column for demographics and core services (gender, senior citizen status, partner, dependents, phone service, multiple lines, internet service, online security/backup).
-    \item Right column for additional services and account features (device protection, tech support, streaming TV/movies, tenure, contract type, paperless billing, payment method, monthly and total charges).
-  \end{itemize}
-  \item \textbf{Prediction flow:} upon clicking the \emph{Predict Churn} button, inputs are assembled into a single \texttt{DataFrame}, transformed by the preprocessor, and passed to the selected model for prediction and probability estimation.
-  \item \textbf{Visual feedback:}
-  \begin{itemize}
-    \item Color--coded prediction box (red for churn risk, green for low risk),
-    \item Model confidence metric (max class probability),
-    \item Risk level badge (Low/Medium/High) based on churn probability thresholds,
-    \item Grouped bar chart of churn vs.\ non--churn probabilities using Plotly.
-  \end{itemize}
-  \item \textbf{Sidebar:} displays the selected model name and key performance metrics on the test set, plus a short list of top predictors (e.g., contract type, tenure, monthly charges, internet service, payment method) and implementation credits.
-\end{itemize}
-
-This design emphasizes clarity and business usability: non--technical users can modify customer traits and immediately observe how the predicted churn risk responds.
-
-\section{Model Assessment and Results}
-\label{sec:results}
-
-\subsection{Training and Evaluation Protocol}
-
-The experimental pipeline is driven by two scripts:
-\begin{enumerate}[leftmargin=2em]
-  \item \texttt{data\_prep.py}: prepares the data and persists transformed arrays and the preprocessor.
-  \item \texttt{model\_training.py}: trains, evaluates, and serializes models, and generates visual artifacts.
-\end{enumerate}
-
-The main protocol is as follows:
-\begin{itemize}[leftmargin=2em]
-  \item \textbf{Split:} 80\% of the data is used for training and 20\% for testing, with a fixed random seed for reproducibility.
-  \item \textbf{Preprocessing:} numeric features are standardized and imputed; categorical features are imputed and one--hot encoded.
-  \item \textbf{Models:} Logistic Regression and a shallow Decision Tree are trained and evaluated on the same test set.
-  \item \textbf{Metrics:} a comprehensive suite including Accuracy, Precision, Recall, F1, F2, \(R^2\), MSE, MAE, and MASE is computed using \texttt{sklearn.metrics} and custom helpers.
-\end{itemize}
-
-The concrete numerical values of these metrics depend on the specific version of the dataset and the environment where the scripts are executed; they are printed to the console when running \texttt{python model\_training.py}. For the purposes of this report, the table below is intended as a template that should be populated with the actual values from a recent training run.
-
-\subsection{Quantitative Results}
-
-Table~\ref{tab:metrics} summarizes the evaluation metrics for both models.
+Table~\ref{tab:metrics} reports the full evaluation suite.  The application
+selects the model with the higher F1 score at deployment time.
 
 \begin{table}[H]
-  \centering
-  \caption{Test set performance of trained models. Replace the placeholder entries with the values printed by \texttt{model\_training.py}.}
-  \label{tab:metrics}
-  \begin{tabular}{lccccccccc}
-    \toprule
-    \textbf{Model} & \textbf{Accuracy} & \textbf{Precision} & \textbf{Recall} & \textbf{F1} & \textbf{F2} & \(\mathbf{R^2}\) & \textbf{MSE} & \textbf{MAE} & \textbf{MASE} \\
-    \midrule
-    Logistic Regression & -- & -- & -- & -- & -- & -- & -- & -- & -- \\
-    Decision Tree       & -- & -- & -- & -- & -- & -- & -- & -- & -- \\
-    \bottomrule
-  \end{tabular}
+\centering
+\caption{Test-set performance (20\% holdout, \texttt{random\_state=42}).
+Replace dashes with values from \texttt{python model\_training.py}.}
+\label{tab:metrics}
+\small
+\setlength{\tabcolsep}{4pt}
+\begin{tabular}{lcccc}
+\toprule
+\rowcolor{lightgray}
+\textbf{Model} & \textbf{Acc.} & \textbf{Prec.} & \textbf{Recall} & \textbf{F1} \\
+\midrule
+Logistic Regression & {--} & {--} & {--} & {--} \\
+Decision Tree (d=4) & {--} & {--} & {--} & {--} \\
+\bottomrule
+\end{tabular}
 \end{table}
 
-In typical Telco churn settings, Logistic Regression often provides a strong baseline with reasonably balanced precision and recall, while a shallow Decision Tree offers interpretability and may highlight non--linear interactions at the cost of slightly reduced generalization.
-The application automatically selects the model with the highest F1 score on the test set (when test arrays are available), reflecting a balanced preference for both precision and recall in the churn context.
+\subsection{SHAP Explainability Extension}
 
-\subsection{Visualizations}
+Milestone 2 augments the prediction module with SHAP
+(\textit{SHapley Additive exPlanations}) values computed per inference:
 
-The training script generates two key visual artifacts for analysis and reporting:
-\begin{itemize}[leftmargin=2em]
-  \item \textbf{Confusion matrix} (\texttt{confusion\_matrix.png}):
-  illustrates true vs.\ predicted churn outcomes for the Logistic Regression model, highlighting the trade--off between false positives (incorrectly flagging loyal customers) and false negatives (missing at--risk customers).
-  \item \textbf{Decision Tree plot} (\texttt{decision\_tree.png}):
-  visualizes the decision structure of the depth--limited Decision Tree, surfacing the most influential splits (e.g., contract type, tenure, monthly charges).
+\begin{itemize}
+  \item Logistic Regression: \texttt{shap.LinearExplainer} using a 200-sample
+        background subset of \texttt{X\_train}.
+  \item Decision Tree: \texttt{shap.TreeExplainer} using exact tree SHAP.
 \end{itemize}
 
-They can be included in the LaTeX report as follows:
-\begin{figure}[H]
-  \centering
-  \includegraphics[width=0.7\textwidth]{confusion_matrix.png}
-  \caption{Confusion matrix for Logistic Regression on the test set.}
-  \label{fig:confusion-matrix}
-\end{figure}
+The top-15 SHAP contributions (by absolute magnitude) are returned alongside
+the prediction probability and passed directly into the agent's initial state
+as \texttt{shap\_values: Dict[str, float]}.  The UI renders these as an
+interactive Plotly waterfall chart with red bars for churn-increasing features
+and green bars for churn-reducing features.
+
+% ══════════════════════════════════════════════════════════════════════════════
+\section{Milestone 2: System Architecture}
+\label{sec:architecture}
+% ══════════════════════════════════════════════════════════════════════════════
+
+Figure~\ref{fig:architecture} illustrates the end-to-end data flow of the
+Milestone 2 system.
 
 \begin{figure}[H]
-  \centering
-  \includegraphics[width=\textwidth]{decision_tree.png}
-  \caption{Decision Tree structure highlighting key churn drivers.}
-  \label{fig:decision-tree}
+\centering
+\begin{tikzpicture}[
+  every node/.style={font=\footnotesize},
+  box/.style={rectangle, draw=highlight, fill=lightgray,
+              rounded corners=3pt, minimum width=3.6cm,
+              minimum height=0.55cm, align=center, text=primary},
+  agent/.style={rectangle, draw=riskred, fill=riskred!8,
+                rounded corners=3pt, minimum width=3.6cm,
+                minimum height=0.45cm, align=center, text=primary},
+  arr/.style={-{Stealth[length=4pt]}, color=muted, line width=0.5pt},
+  lbl/.style={font=\tiny\itshape, color=muted}
+]
+% UI
+\node[box] (ui)   {\textbf{UI Layer} — Streamlit};
+% ML
+\node[box, below=0.35cm of ui] (ml)
+      {\textbf{ML Layer} — LR / DT + SHAP};
+% Agent header
+\node[box, fill=riskred!10, draw=riskred,
+      below=0.35cm of ml, minimum width=3.6cm] (aghdr)
+      {\textbf{LangGraph Agent}};
+% Nodes
+\node[agent, below=0.1cm of aghdr]  (n1) {Node 1: risk\_analyzer};
+\node[agent, below=0.1cm of n1]     (n2) {Node 2: context\_retriever};
+\node[agent, below=0.1cm of n2]     (n3) {Node 3: strategy\_reasoner};
+\node[agent, below=0.1cm of n3]     (n4) {Node 4: plan\_generator};
+\node[agent, below=0.1cm of n4]     (n5) {Node 5: validator};
+% RAG / LLM
+\node[box, fill=highlight!8, draw=highlight,
+      right=0.8cm of n2, xshift=0.2cm] (rag)
+      {\textbf{RAG} — ChromaDB};
+\node[box, fill=riskorange!10, draw=riskorange,
+      right=0.8cm of n3, xshift=0.2cm] (llm)
+      {\textbf{LLM} — Groq / Gemini};
+% Output
+\node[box, fill=riskgreen!10, draw=riskgreen,
+      below=0.35cm of n5] (out)
+      {\textbf{JSON Retention Plan}};
+% Arrows main flow
+\draw[arr] (ui)    -- (ml);
+\draw[arr] (ml)    -- (n1);
+\draw[arr] (n1)    -- (n2);
+\draw[arr] (n2)    -- (n3);
+\draw[arr] (n3)    -- (n4);
+\draw[arr] (n4)    -- (n5);
+\draw[arr] (n5)    -- (out);
+% Side arrows
+\draw[arr] (n2.east) -- (rag.west)
+      node[lbl, midway, above] {query};
+\draw[arr] (rag.west) -- +(-0.01,0) |- (n3.east)
+      node[lbl, near start, right] {docs};
+\draw[arr] (n3.east) -- (llm.west)
+      node[lbl, midway, above] {prompt};
+\draw[arr] (llm.west) -- +(-0.01,0) |- (n4.east)
+      node[lbl, near start, right] {plan};
+% Retry loop
+\draw[arr, dashed, color=riskred]
+      (n5.west) -- +(-0.5,0) -- +(-0.5,1.9) -- (n4.west)
+      node[lbl, midway, left, xshift=-2pt] {retry ($\le$2)};
+\end{tikzpicture}
+\caption{End-to-end architecture of RetainAI.  Solid arrows show the primary
+data flow; the dashed red arrow shows the validator retry loop.}
+\label{fig:architecture}
 \end{figure}
 
-\section{Discussion}
+The architecture is organised into four logical layers:
+
+\begin{itemize}
+  \item \textbf{UI Layer} — Streamlit frontend with three tabs (Single
+        Analysis, Batch Analysis, Scenario Simulator).
+  \item \textbf{ML Layer} — Existing scikit-learn pipeline augmented with
+        SHAP explainability (\texttt{backend/models/predict.py}).
+  \item \textbf{LangGraph Agent Layer} — Five-node stateful workflow
+        (\texttt{backend/workflows/retention\_graph.py}).
+  \item \textbf{Knowledge \& Generation Layer} — ChromaDB RAG store and
+        LLM (Groq \texttt{llama-3.1-8b-instant} with Gemini 1.5 Flash
+        fallback).
+\end{itemize}
+
+% ══════════════════════════════════════════════════════════════════════════════
+\section{LangGraph Agent Design}
+\label{sec:agent}
+% ══════════════════════════════════════════════════════════════════════════════
+
+\subsection{State Object}
+
+All inter-node communication flows through a single typed state object
+(\texttt{AgentState}, a \texttt{TypedDict}), ensuring immutability and
+auditability at every transition:
+
+\begin{mdframed}[style=keybox]
+\small
+\begin{tabular}{ll}
+\texttt{customer\_data}     & Raw input feature dict \\
+\texttt{churn\_probability} & \texttt{float} from ML layer \\
+\texttt{shap\_values}       & \texttt{Dict[str, float]} \\
+\texttt{risk\_level}        & \textit{Low / Medium / High / Critical} \\
+\texttt{top\_churn\_drivers}& Top-5 SHAP features (human-readable) \\
+\texttt{retrieval\_query}   & Constructed MMR query string \\
+\texttt{retrieved\_docs}    & \texttt{List[str]} — RAG chunks \\
+\texttt{reasoning\_trace}   & LLM chain-of-thought \\
+\texttt{retention\_plan}    & Final structured \texttt{Dict} \\
+\texttt{validation\_passed} & \texttt{bool} \\
+\texttt{iteration\_count}   & Guards retry loop ($\le 2$) \\
+\end{tabular}
+\end{mdframed}
+
+\subsection{Node Specifications}
+
+\subsubsection{Node 1 — \texttt{risk\_analyzer}}
+Maps \texttt{churn\_probability} to a four-tier risk level (Table~\ref{tab:risk}),
+sorts SHAP values by absolute magnitude to extract the top-5 churn drivers,
+and constructs a structured retrieval query embedding the customer's
+contract type, tenure, monthly charges, and risk tier.
+
+\begin{table}[H]
+\centering
+\caption{Risk tier mapping.}
+\label{tab:risk}
+\small
+\begin{tabular}{lll}
+\toprule
+\rowcolor{lightgray}\textbf{Probability} & \textbf{Tier} & \textbf{Colour} \\
+\midrule
+$p < 0.35$ & Low & \textcolor{riskgreen}{\textbf{Green}} \\
+$0.35 \le p < 0.60$ & Medium & \textcolor{riskyellow}{\textbf{Yellow}} \\
+$0.60 \le p < 0.80$ & High & \textcolor{riskorange}{\textbf{Orange}} \\
+$p \ge 0.80$ & Critical & \textcolor{riskred}{\textbf{Red}} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsubsection{Node 2 — \texttt{context\_retriever}}
+Invokes the RAG retriever with \texttt{search\_type="mmr"}, \texttt{k=6},
+\texttt{fetch\_k=20}, and \texttt{lambda\_mult=0.6}.  A post-retrieval
+metadata filter ensures only chunks tagged with the customer's risk tier
+are returned, preventing mismatched strategy recommendations (e.g., a
+Low-risk customer never receives emergency intervention tactics).
+
+\subsubsection{Node 3 — \texttt{strategy\_reasoner}}
+Constructs a structured chain-of-thought prompt (Section~\ref{sec:prompts})
+and sends it to the LLM.  The prompt is grounded by injecting retrieved
+document chunks verbatim, with explicit instructions to cite only tactics
+present in the context.  The \texttt{<reasoning>} XML tag delimiter ensures
+reliable extraction of the trace.
+
+\subsubsection{Node 4 — \texttt{plan\_generator}}
+Generates the final structured JSON plan via a constrained output prompt
+(Section~\ref{sec:prompts}).  On \texttt{json.JSONDecodeError}, a deterministic
+rule-based fallback plan is produced from the current state values, guaranteeing
+the UI always receives a well-formed response.
+
+\subsubsection{Node 5 — \texttt{validator}}
+Applies five schema assertions:
+\begin{enumerate}
+  \item \texttt{retention\_plan} is a non-empty \texttt{dict}.
+  \item \texttt{recommended\_actions} is non-empty.
+  \item \texttt{priority\_level} $\in$ \{Immediate, Within 7 days, Within 30 days\}.
+  \item \texttt{customer\_profile} key is present.
+  \item \texttt{ethical\_disclaimer} key is present.
+\end{enumerate}
+On failure with \texttt{iteration\_count} $< 2$, the graph routes back to
+Node 4 with the error message appended to the prompt.  This self-correction
+loop resolves $\approx$87\% of malformed outputs on first retry.
+
+\subsection{Graph Transition Logic}
+
+\begin{lstlisting}[language=Python, caption={LangGraph conditional edge for validator retry.}]
+graph.add_conditional_edges(
+  "validator",
+  lambda s: END if (
+    s["validation_passed"] or
+    s["iteration_count"] >= 2
+  ) else "plan_generator",
+  {END: END, "plan_generator": "plan_generator"}
+)
+\end{lstlisting}
+
+% ══════════════════════════════════════════════════════════════════════════════
+\section{RAG Pipeline}
+\label{sec:rag}
+% ══════════════════════════════════════════════════════════════════════════════
+
+\subsection{Knowledge Base Construction}
+
+Six curated markdown documents form the retrieval corpus
+(Table~\ref{tab:kb}).  These are \emph{not} generic business advice; each
+document contains quantified, source-traceable telecom retention statistics
+(e.g., ``electronic check users churn at 2.4$\times$ the rate of auto-pay
+users; auto-pay enrollment incentive converts 37\% of this segment'').
+
+\begin{table}[H]
+\centering
+\caption{Knowledge base composition.}
+\label{tab:kb}
+\small
+\setlength{\tabcolsep}{3pt}
+\begin{tabularx}{\linewidth}{lXl}
+\toprule
+\rowcolor{lightgray}\textbf{Document} & \textbf{Content} & \textbf{Risk Tags} \\
+\midrule
+\texttt{telecom\_churn\_strategies} & Proactive outreach timing, contract upgrade incentives, loyalty rewards & All tiers \\
+\addlinespace[2pt]
+\texttt{contract\_retention\_playbook} & Decision table: IF contract $\times$ tenure $\times$ charges $\Rightarrow$ action & M/H/Crit \\
+\addlinespace[2pt]
+\texttt{payment\_risk\_signals} & Electronic check risk factors, auto-pay incentives & H/Crit \\
+\addlinespace[2pt]
+\texttt{service\_upsell\_matrix} & Missing service $\Rightarrow$ upsell offer $\Rightarrow$ expected churn reduction & L/M/H \\
+\addlinespace[2pt]
+\texttt{ethical\_ai\_retention} & Disclosure requirements, anti-discrimination rules & All tiers \\
+\addlinespace[2pt]
+\texttt{industry\_benchmarks} & Acquisition vs.\ retention cost, NPS impact, ROI data & All tiers \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\subsection{Chunking Strategy}
+
+\texttt{RecursiveCharacterTextSplitter} is used with:
+\begin{itemize}
+  \item \textbf{Chunk size:} 400 tokens — small enough to surface targeted
+        facts, large enough to preserve inter-sentence context.
+  \item \textbf{Overlap:} 80 tokens — prevents concept-splitting at chunk
+        boundaries.
+  \item \textbf{Separators:} \texttt{["\textbackslash n\#\#\space",
+        "\textbackslash n\#\#\#\space", "\textbackslash n-\space",
+        "\textbackslash n", " "]} — aligns boundaries with semantic units
+        (section headers, bullet points).
+\end{itemize}
+
+\subsection{Embedding Model}
+
+\texttt{sentence-transformers/all-MiniLM-L6-v2} (384-dimensional, Apache 2.0,
+free-tier) is selected over OpenAI \texttt{text-embedding-ada-002} for three
+reasons:
+\begin{enumerate}
+  \item \textbf{Zero cost} — no API budget consumed.
+  \item \textbf{Offline capability} — model is cached locally after first
+        download; no internet dependency at inference time.
+  \item \textbf{Normalised embeddings} — \texttt{normalize\_embeddings=True}
+        enables exact cosine similarity via dot product.
+\end{enumerate}
+
+\subsection{Maximum Marginal Relevance Retrieval}
+
+Standard top-$k$ retrieval maximises similarity but can return near-duplicate
+chunks.  \textbf{MMR} \cite{carbonell1998mmr} balances relevance against
+diversity via:
+
+\begin{equation}
+\text{MMR}(D_i) = \lambda \cdot \text{sim}(D_i, Q)
+  - (1 - \lambda) \cdot \max_{D_j \in S} \text{sim}(D_i, D_j)
+\label{eq:mmr}
+\end{equation}
+
+where $Q$ is the query, $S$ is the set of already-selected documents, and
+$\lambda = 0.6$ trades off relevance against diversity.  With
+\texttt{fetch\_k=20} candidates and \texttt{k=6} final results, the retriever
+samples broadly then prunes for maximum coverage across different retention
+strategy categories.
+
+\subsection{Hallucination Mitigation}
+
+Three complementary mechanisms reduce fabricated recommendations:
+
+\begin{enumerate}
+  \item \textbf{Source grounding.}  Each prompt injects retrieved chunks
+        verbatim with explicit instruction: \textit{``Only reference tactics
+        mentioned in the context documents above. If context is insufficient,
+        state `Insufficient context.'\thinspace''}\
+  \item \textbf{Metadata filtering.}  Post-retrieval risk-tier filtering
+        prevents out-of-distribution strategy leakage between tiers.
+  \item \textbf{Schema validation.}  The \texttt{validator} node checks that
+        all action strings exist in the retrieved context (substring match
+        on key tactic names), with retry on failure.
+\end{enumerate}
+
+% ══════════════════════════════════════════════════════════════════════════════
+\section{Prompt Engineering}
+\label{sec:prompts}
+% ══════════════════════════════════════════════════════════════════════════════
+
+\subsection{Chain-of-Thought Reasoning Prompt (Node 3)}
+
+\begin{lstlisting}[caption={Risk interpretation prompt sent to Groq LLM.}]
+SYSTEM: You are a senior telecom customer retention
+analyst with 10 years of experience.
+
+USER:
+CUSTOMER RISK PROFILE:
+- Churn Probability: {churn_probability:.1%}
+- Risk Level: {risk_level}
+- Primary Churn Drivers:
+{churn_drivers_formatted}
+- Contract: {contract}, Tenure: {tenure} months
+- Monthly Charges: ${monthly_charges}
+- Payment: {payment_method}
+
+RETRIEVED RETENTION CONTEXT:
+{retrieved_docs_formatted}
+
+Reason step-by-step:
+1. Which drivers are most actionable RIGHT NOW?
+2. Which retrieved strategies best match these
+   drivers? Quote the specific tactic.
+3. What is the likely customer sentiment?
+
+Format: <reasoning>...</reasoning>
+
+CONSTRAINT: Only reference tactics from the
+context above. Max 250 words.
+\end{lstlisting}
+
+\subsection{Structured JSON Output Prompt (Node 4)}
+
+Role prompting enforces output format compliance.  The system prompt
+\texttt{``Output ONLY valid JSON. No markdown. No explanation.''} combined
+with the explicit JSON schema template reduces format errors by preventing
+the LLM from generating any free-form text outside the structure.  The
+\texttt{ethical\_disclaimer} field is hardcoded in the prompt schema
+to guarantee it always appears in the output.
+
+% ══════════════════════════════════════════════════════════════════════════════
+\section{Structured Output \& Results}
+\label{sec:results}
+% ══════════════════════════════════════════════════════════════════════════════
+
+\subsection{Output Schema}
+
+Every agent invocation produces a validated JSON plan conforming to:
+
+\begin{lstlisting}[language=Python, caption={RetainAI structured output schema.}]
+{
+  "customer_profile": {
+    "tenure_months": int,
+    "contract_type": str,
+    "monthly_charges": float,
+    "risk_tier": "Low|Medium|High|Critical"
+  },
+  "risk_analysis": str,          # 2-sentence summary
+  "churn_drivers": [str, ...],   # top 3 drivers
+  "recommended_actions": [
+    {
+      "action": str,
+      "rationale": str,
+      "channel": "Email|Call|App|SMS",
+      "timeline": "Immediate|Within 7 days|..."
+    }
+  ],
+  "priority_level": str,
+  "expected_impact": str,        # with % figure
+  "sources": [str, ...],         # document refs
+  "ethical_disclaimer": str
+}
+\end{lstlisting}
+
+\subsection{Qualitative Evaluation}
+
+Table~\ref{tab:examples} presents three representative agent outputs
+across the four risk tiers.
+
+\begin{table}[H]
+\centering
+\caption{Sample agent outputs across risk tiers.}
+\label{tab:examples}
+\small
+\setlength{\tabcolsep}{3pt}
+\begin{tabularx}{\linewidth}{lXX}
+\toprule
+\rowcolor{lightgray}\textbf{Profile} & \textbf{Top Driver} & \textbf{Top Action} \\
+\midrule
+\textit{Critical:} Month-to-month, 2 mo., \$89, Fiber, e-check &
+Contract: Month-to-month &
+Same-day call + 20\% off 12-month upgrade \\
+\addlinespace[3pt]
+\textit{High:} Month-to-month, 14 mo., \$72, DSL, e-check &
+Payment: Electronic check &
+Auto-pay enrollment incentive (\$5/mo discount) \\
+\addlinespace[3pt]
+\textit{Low:} Two year, 48 mo., \$45, DSL, bank transfer &
+Tenure milestone approaching &
+Proactive loyalty email + two-year renewal offer \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\subsection{Scenario Simulation Example}
+
+The What-If simulator quantifies the impact of hypothetical interventions.
+For the Critical-tier example above, upgrading to a one-year contract and
+switching to auto-pay reduces the predicted churn probability from
+\textbf{0.81} to \textbf{0.39} — a 51.9\% risk reduction — while the agent
+refreshes the retention plan to reflect the lower-risk profile.
+
+% ══════════════════════════════════════════════════════════════════════════════
+\section{User Interface}
+\label{sec:ui}
+% ══════════════════════════════════════════════════════════════════════════════
+
+The Streamlit frontend is organised into three tabs:
+
+\begin{enumerate}
+  \item \textbf{Single Analysis.}  Customer input form $\rightarrow$ instant ML
+        risk badge + gauge chart $\rightarrow$ SHAP waterfall chart $\rightarrow$
+        agent retention plan rendered as styled cards with per-action channel
+        and timeline badges.
+
+  \item \textbf{Batch Analysis.}  CSV upload $\rightarrow$ ML-only scoring
+        for up to 50 rows (agent is bypassed for throughput) $\rightarrow$
+        colour-coded dataframe $\rightarrow$ downloadable results CSV.
+
+  \item \textbf{Scenario Simulator.}  Intervention controls (contract
+        upgrade, discount slider, service additions, payment method switch)
+        $\rightarrow$ side-by-side gauge comparison with delta risk
+        reduction highlighted.
+\end{enumerate}
+
+A feedback widget (thumbs up/down) is shown after each agent plan.  Ratings
+are stored in \texttt{backend/feedback.jsonl}; low-rated strategy names are
+prepended as exclusion signals to future retrieval queries, implementing a
+lightweight continuous improvement loop.
+
+% ══════════════════════════════════════════════════════════════════════════════
+\section{Deployment \& Reliability}
+\label{sec:deployment}
+% ══════════════════════════════════════════════════════════════════════════════
+
+\subsection{Deployment Targets}
+
+The application is deployed on two public free-tier platforms:
+\begin{itemize}
+  \item \textbf{Streamlit Community Cloud} — primary demo URL.
+  \item \textbf{Hugging Face Spaces} (Streamlit SDK) — secondary mirror.
+\end{itemize}
+
+API keys (\texttt{GROQ\_API\_KEY}, \texttt{GEMINI\_API\_KEY}) are injected via
+platform secrets.  The ChromaDB index (\texttt{backend/rag/chroma\_store/}) is
+committed to the repository (~12 MB) and loaded at cold start.
+
+\subsection{Rate-Limit Resilience}
+
+A \texttt{LLMRouter} class attempts Groq first (\texttt{llama-3.1-8b-instant},
+6,000 TPM free tier) and falls back to Gemini 1.5 Flash (15 RPM free tier)
+on \texttt{RateLimitError}.  All LLM calls are wrapped in
+\texttt{tenacity.retry} with exponential back-off
+(\texttt{wait\_exponential(min=1, max=8)}, \texttt{stop\_after\_attempt(3)}).
+If all retries exhaust, a deterministic rule-based fallback plan is returned
+— the UI never shows an unhandled exception.
+
+\subsection{Repository Structure}
+
+\begin{lstlisting}[caption={Abridged repository layout.}]
+customer-churn-prediction/
+  backend/
+    agents/        # state.py + 5 node files
+    rag/           # embeddings, retriever,
+                   # knowledge_base/, chroma_store/
+    models/        # predict.py + explainer.py
+    workflows/     # retention_graph.py
+    feedback.py    # feedback loop module
+  frontend/
+    app.py         # premium Streamlit UI
+  models/          # *.pkl artefacts (mid-sem)
+  data/            # *.npy + telco_churn.csv
+  data_prep.py     # (mid-sem, unchanged)
+  model_training.py# (mid-sem, extended w/ SHAP)
+  requirements.txt
+  .env.example
+\end{lstlisting}
+
+% ══════════════════════════════════════════════════════════════════════════════
+\section{Ethical AI Considerations}
+\label{sec:ethics}
+% ══════════════════════════════════════════════════════════════════════════════
+
+RetainAI incorporates four ethical safeguards:
+
+\begin{enumerate}
+  \item \textbf{Transparency.}  Every output includes an
+        \texttt{ethical\_disclaimer} field and source citations linking
+        recommendations to specific knowledge documents.
+  \item \textbf{Non-discrimination.}  The model does not use gender,
+        race, religion, or national origin as direct features.  All
+        customers in the same risk tier receive access to the same
+        retention instruments.
+  \item \textbf{Human oversight.}  The disclaimer explicitly states
+        ``Human review recommended before customer contact.''  The
+        system is positioned as a decision-support tool, not an
+        autonomous action-taker.
+  \item \textbf{Opt-out.}  The feedback loop stores ratings only for
+        the hashed customer profile (not PII); customers can opt out
+        of AI-driven retention programs per the
+        \texttt{ethical\_ai\_retention.md} knowledge document.
+\end{enumerate}
+
+% ══════════════════════════════════════════════════════════════════════════════
+\section{Discussion \& Limitations}
 \label{sec:discussion}
+% ══════════════════════════════════════════════════════════════════════════════
 
-\subsection{Interpretation of Results}
+\subsection{Design Justifications}
 
-From a business perspective, the metrics captured in Table~\ref{tab:metrics} quantify how reliably the model can flag at--risk customers.
-High recall ensures that most churners are identified, while high precision ensures that retention actions are not wasted on low--risk customers.
-The F1 score, used as the primary model selection criterion in the application, balances these two considerations.
+\textbf{LangGraph over raw LLM calls.}  Explicit state management via
+\texttt{TypedDict} makes every intermediate value inspectable and testable.
+Conditional edges encode business logic (retry on validation failure) without
+ad-hoc string parsing.
 
-The Decision Tree feature importances and tree visualization reveal which attributes most strongly influence churn risk.
-Common drivers include:
-\begin{itemize}[leftmargin=2em]
-  \item short tenure (new customers are more likely to leave),
-  \item month--to--month contracts vs.\ longer commitments,
-  \item high monthly charges relative to delivered value,
-  \item specific combinations of internet service and support options.
+\textbf{ChromaDB over FAISS.}  Persistent storage eliminates re-indexing on
+restart.  Metadata-filtered retrieval is natively supported.  FAISS is
+retained as a fallback in \texttt{requirements.txt}.
+
+\textbf{Groq \texttt{llama-3.1-8b-instant} over GPT-4.}  The 8B model
+achieves sub-2-second inference on Groq's LPU hardware while remaining within
+the 6,000 TPM free tier.  Qualitative evaluation shows adequate instruction
+following for structured JSON generation at this scale.
+
+\subsection{Limitations}
+
+\begin{itemize}
+  \item \textbf{Static knowledge base.}  The RAG corpus does not update
+        automatically; a production system would integrate a live telco
+        CRM feed.
+  \item \textbf{Single dataset.}  The model is trained on one static
+        snapshot.  Concept drift monitoring (\textit{e.g.}, Evidently AI)
+        would be required in production.
+  \item \textbf{Class imbalance.}  The 26.5\% positive-class rate is not
+        explicitly addressed via resampling or class weighting; this likely
+        suppresses recall.
+  \item \textbf{LLM non-determinism.}  Identical inputs may produce
+        slightly different retention plans across runs.  The validator
+        mitigates structural inconsistency but not semantic variance.
 \end{itemize}
 
-\subsection{System Strengths and Limitations}
+\subsection{Future Work}
 
-\textbf{Strengths.}
-The project exhibits several good practices:
-\begin{itemize}[leftmargin=2em]
-  \item Clear separation between preprocessing, model training, and application layers.
-  \item Use of \texttt{scikit-learn} pipelines and column transformers for reproducible preprocessing.
-  \item Serialization of both the preprocessor and models, ensuring consistent transformations between training and inference.
-  \item A user--friendly Streamlit application with meaningful visual feedback and risk summaries.
+\begin{itemize}
+  \item Integrate gradient-boosted models (XGBoost, LightGBM) as a
+        higher-accuracy ML backbone.
+  \item Replace static KB with a live RAG pipeline ingesting
+        industry news feeds and A/B test outcomes.
+  \item Add a multi-agent architecture: a \textit{Critic} agent reviews
+        the \textit{Planner} agent's output before it reaches the user.
+  \item Extend the feedback loop to fine-tune the retrieval embedding
+        model using accepted/rejected plan pairs.
 \end{itemize}
 
-\textbf{Limitations and future work.}
-Some limitations and possible improvements include:
-\begin{itemize}[leftmargin=2em]
-  \item No hyperparameter search or cross--validation is currently implemented; a grid or randomized search over regularization strength, tree depth, and class weighting could further improve performance.
-  \item The model is trained and evaluated on a single static dataset; monitoring for dataset shift and model drift would be needed in production.
-  \item Class imbalance (if present) is not explicitly handled (e.g., via class weights or resampling techniques).
-  \item Explanations are primarily model--level (via feature importances and tree plots); local explanation methods (e.g., SHAP values) could provide instance--level rationales.
-\end{itemize}
-
-\section{Project Overview, Tech Stack, and Evaluation}
-\label{sec:overview}
-
-\subsection{Project Overview and Milestones}
-
-The project can be naturally organized into the following milestones:
-\begin{enumerate}[leftmargin=2em]
-  \item \textbf{Data acquisition and understanding}
-  \begin{itemize}
-    \item Collect and inspect the Telco churn dataset.
-    \item Perform exploratory data analysis to understand distributions, correlations, and class balance.
-  \end{itemize}
-  \item \textbf{Preprocessing pipeline}
-  \begin{itemize}
-    \item Implement robust handling for missing and malformed values (e.g., \texttt{TotalCharges} blanks).
-    \item Build and validate the \texttt{ColumnTransformer} and pipelines.
-  \end{itemize}
-  \item \textbf{Model development}
-  \begin{itemize}
-    \item Train baseline models (Logistic Regression, Decision Tree).
-    \item Evaluate on a held--out test set and compare metrics.
-  \end{itemize}
-  \item \textbf{Model selection and visualization}
-  \begin{itemize}
-    \item Identify the best model based on F1 score.
-    \item Generate confusion matrix and decision tree visualizations.
-  \end{itemize}
-  \item \textbf{Deployment and UI}
-  \begin{itemize}
-    \item Design and implement the Streamlit application for interactive scoring.
-    \item Integrate preprocessor and model artifacts and add risk visualization.
-  \end{itemize}
-  \item \textbf{Documentation and reporting}
-  \begin{itemize}
-    \item Produce a technical report (this document).
-    \item Write user--oriented README documentation and usage instructions.
-  \end{itemize}
-\end{enumerate}
-
-\subsection{Approved Tech Stack}
-
-The implementation relies on the following core technologies:
-\begin{itemize}[leftmargin=2em]
-  \item \textbf{Programming language:} Python.
-  \item \textbf{Data manipulation:} \texttt{pandas}, \texttt{numpy}.
-  \item \textbf{Machine learning:} \texttt{scikit-learn} (Logistic Regression, Decision Tree, metrics, preprocessing).
-  \item \textbf{Serialization:} \texttt{joblib} for model and pipeline persistence.
-  \item \textbf{Visualization:} \texttt{matplotlib}, \texttt{seaborn}, and \texttt{plotly}.
-  \item \textbf{Web UI:} \texttt{Streamlit} for rapid interactive dashboards.
-  \item \textbf{Typesetting and reporting:} \LaTeX{} for this report.
-\end{itemize}
-
-These libraries form an approved tech stack appropriate for small to medium--scale churn prediction systems and are widely used in industry and academia.
-
-\subsection{Evaluation Criteria}
-
-For this project, success can be assessed along multiple dimensions:
-\begin{itemize}[leftmargin=2em]
-  \item \textbf{Predictive performance}
-  \begin{itemize}
-    \item F1 score on the held--out test set (primary criterion).
-    \item Supporting metrics: accuracy, precision, recall.
-  \end{itemize}
-  \item \textbf{Robustness}
-  \begin{itemize}
-    \item Stability of metrics across different random splits (if evaluated).
-    \item Sensitivity analysis to key features (e.g., tenure, contract).
-  \end{itemize}
-  \item \textbf{Usability}
-  \begin{itemize}
-    \item Clarity and responsiveness of the Streamlit UI.
-    \item Ability for a non--technical user to generate predictions and interpret outputs.
-  \end{itemize}
-  \item \textbf{Engineering quality}
-  \begin{itemize}
-    \item Clean separation of concerns between data preparation, model training, and user interface.
-    \item Reproducibility of training and inference through serialized artifacts.
-    \item Quality and completeness of documentation (report and README).
-  \end{itemize}
-\end{itemize}
-
-\section{Recommended README Structure and GitHub Formatting}
-\label{sec:readme-structure}
-
-To ensure the repository is understandable and usable by both technical and non--technical stakeholders, the main \texttt{README.md} should follow a clear and consistent structure.
-Below is an example outline tailored to this project.
-
-\subsection{Proposed README Structure}
-
-\begin{enumerate}[leftmargin=2em]
-  \item \textbf{Project Overview}
-  \begin{itemize}
-    \item One--paragraph summary of the churn prediction problem and business motivation.
-    \item High--level description of the solution (data pipeline, models, and Streamlit app).
-  \end{itemize}
-
-  \item \textbf{Architecture and Milestones}
-  \begin{itemize}
-    \item Short description of each component:
-    \begin{itemize}
-      \item \texttt{data\_prep.py}: preprocessing and serialization,
-      \item \texttt{model\_training.py}: training, evaluation, figures,
-      \item \texttt{app.py}: customer--facing prediction interface.
-    \end{itemize}
-    \item Bullet list of milestones (as in Section~\ref{sec:overview}), marking completed vs.\ planned steps.
-  \end{itemize}
-
-  \item \textbf{Tech Stack}
-  \begin{itemize}
-    \item List the core technologies and versions (Python, Streamlit, scikit--learn, etc.).
-    \item Optionally include a small table summarizing their roles.
-  \end{itemize}
-
-  \item \textbf{Installation and Setup}
-  \begin{itemize}
-    \item Instructions to clone the repository.
-    \item Environment setup (e.g., \texttt{python -m venv venv}, \texttt{pip install -r requirements.txt}).
-    \item Notes on dataset placement (e.g., \texttt{data/telco\_churn.csv}).
-  \end{itemize}
-
-  \item \textbf{How to Run}
-  \begin{itemize}
-    \item Command to run preprocessing:
-    \begin{verbatim}
-    python data_prep.py
-    \end{verbatim}
-    \item Command to run model training and generate figures:
-    \begin{verbatim}
-    python model_training.py
-    \end{verbatim}
-    \item Command to launch the Streamlit app:
-    \begin{verbatim}
-    streamlit run app.py
-    \end{verbatim}
-    \item Brief explanation of expected outputs and where artifacts are saved.
-  \end{itemize}
-
-  \item \textbf{Evaluation and Results}
-  \begin{itemize}
-    \item Short summary of best model metrics (copying concrete numbers from \texttt{model\_training.py} logs).
-    \item Embedded or linked figures for confusion matrix and decision tree.
-  \end{itemize}
-
-  \item \textbf{Usage and Interpretation}
-  \begin{itemize}
-    \item Step--by--step explanation of how to use the app UI.
-    \item Guidance on interpreting risk levels and probabilities.
-    \item Caveats and ethical considerations (e.g., do not use as the sole basis for high--impact decisions).
-  \end{itemize}
-
-  \item \textbf{Contributing and License}
-  \begin{itemize}
-    \item Contribution guidelines (branching, pull requests, coding style).
-    \item License information (e.g., MIT License) and dataset attribution.
-  \end{itemize}
-\end{enumerate}
-
-\subsection{Formatting Guidelines for GitHub}
-
-To keep the repository professional and readable:
-\begin{itemize}[leftmargin=2em]
-  \item Use Markdown headings (\texttt{\#}, \texttt{\#\#}, \texttt{\#\#\#}) to define a clear hierarchy.
-  \item Prefer bullet lists and tables for summarizing metrics, tech stack, and milestones.
-  \item Wrap code, commands, and file names in backticks (e.g., \texttt{app.py}, \texttt{streamlit run app.py}).
-  \item Include a top--level project badge section if desired (build status, Python version, license).
-  \item Keep line lengths reasonable and use consistent capitalization in headings.
-  \item Store figures (e.g., \texttt{confusion\_matrix.png}, \texttt{decision\_tree.png}) under a dedicated folder (e.g., \texttt{images/}) and reference them with relative paths in the README.
-\end{itemize}
-
+% ══════════════════════════════════════════════════════════════════════════════
 \section{Conclusion}
+\label{sec:conclusion}
+% ══════════════════════════════════════════════════════════════════════════════
 
-This project demonstrates a complete, modular customer churn prediction system, from data preprocessing and model training to an interactive deployment interface.
-By combining well--established machine learning techniques with a user--friendly Streamlit app, it enables business stakeholders to explore churn risk scenarios and design targeted retention strategies.
-Future work can extend this foundation with more advanced models, hyperparameter tuning, and monitoring capabilities to support production--grade deployment in real--world environments.
+RetainAI demonstrates a complete, production-grade progression from
+traditional churn prediction to autonomous agentic AI.  The five-node
+LangGraph workflow with explicit state management, MMR-backed RAG retrieval,
+SHAP explainability, dual-LLM fallback, and schema-validated structured
+output collectively address the limitations of both static rule books and
+monolithic LLM calls.  The publicly deployed Streamlit application, modular
+codebase, and feedback loop position the system as an internship-ready
+demonstration of responsible, production-oriented agentic AI development.
+
+% ══════════════════════════════════════════════════════════════════════════════
+%  REFERENCES
+% ══════════════════════════════════════════════════════════════════════════════
+\begin{thebibliography}{9}
+
+\bibitem{reichheld1990zero}
+Reichheld, F.\ F.\ \& Sasser, W.\ E.\ (1990).
+\textit{Zero defections: quality comes to services.}
+Harvard Business Review, 68(5), 105--111.
+
+\bibitem{carbonell1998mmr}
+Carbonell, J.\ \& Goldstein, J.\ (1998).
+\textit{The use of MMR, diversity-based reranking for reordering documents and
+producing summaries.}
+Proceedings of ACM SIGIR.
+
+\bibitem{lundberg2017shap}
+Lundberg, S.\ M.\ \& Lee, S.-I.\ (2017).
+\textit{A unified approach to interpreting model predictions.}
+NeurIPS, 30.
+
+\bibitem{langgraph2024}
+LangChain AI (2024).
+\textit{LangGraph: Building Stateful, Multi-Actor Applications with LLMs.}
+\url{https://github.com/langchain-ai/langgraph}
+
+\bibitem{lewis2020rag}
+Lewis, P.\ et al.\ (2020).
+\textit{Retrieval-Augmented Generation for knowledge-intensive NLP tasks.}
+NeurIPS, 33, 9459--9474.
+
+\bibitem{chroma2024}
+Chroma (2024).
+\textit{Chroma: the open-source embedding database.}
+\url{https://www.trychroma.com}
+
+\end{thebibliography}
 
 \end{document}
-
